@@ -91,14 +91,21 @@ function guardPage(expectedRole){
     }
     return;
   }
+  // Joriy sahifa qanchalik chuqurlikda joylashganini aniqlab,
+  // login sahifasiga to'g'ri nisbiy yo'l bilan qaytamiz
+  // (masalan admin/dashboard.html -> ../index.html)
+  const depth = window.location.pathname.split('/').filter(Boolean).length -
+                (window.location.pathname.endsWith('.html') ? 1 : 0);
+  const loginPath = '../'.repeat(Math.max(depth - 1, 0)) + 'index.html';
+
   auth.onAuthStateChanged(async (user) => {
     if(!user){
-      window.location.href = '/index.html';
+      window.location.href = loginPath;
       return;
     }
     const userDoc = await db.collection('users').doc(user.uid).get();
     if(!userDoc.exists || userDoc.data().role !== expectedRole){
-      window.location.href = '/index.html';
+      window.location.href = loginPath;
     }
   });
 }
