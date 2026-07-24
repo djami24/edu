@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ro'yxatdan o'tish — Education Express</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">EE</div>
+    <h1 class="auth-title">Ro'yxatdan o'tish</h1>
+    <p class="auth-subtitle">Hisobingizni yarating</p>
+
+    <div class="role-tabs" id="roleTabs">
+      <button class="role-tab" data-role="teacher">O'qituvchi</button>
+      <button class="role-tab active" data-role="student">Talaba</button>
+      <button class="role-tab" data-role="parent">Ota-ona</button>
+    </div>
+
+    <div id="regForm">
+      <div class="form-group">
+        <label class="form-label">To'liq ism</label>
+        <input class="form-input" type="text" id="regName" placeholder="Ism Familiya" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="regEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parol</label>
+        <input class="form-input" type="password" id="regPassword" placeholder="Kamida 6 ta belgi" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parolni tasdiqlang</label>
+        <input class="form-input" type="password" id="regPassword2" placeholder="••••••••" required>
+      </div>
+
+      <!-- Talaba uchun qo'shimcha -->
+      <div id="studentFields">
+        <div class="form-group">
+          <label class="form-label">Guruh kodi (o'qituvchidan oling)</label>
+          <input class="form-input" type="text" id="regGroupCode" placeholder="Masalan: INT-B1-2026">
+        </div>
+      </div>
+
+      <!-- Ota-ona uchun qo'shimcha -->
+      <div id="parentFields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Farzandingizning emaili</label>
+          <input class="form-input" type="email" id="regChildEmail" placeholder="farzand@example.com">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="regBtn" onclick="handleRegister()">Ro'yxatdan o'tish</button>
+    </div>
+
+    <p style="text-align:center; margin-top:16px; font-size:13px; color:var(--color-text-muted)">
+      Hisobingiz bormi? <a href="index.html" style="color:var(--color-indigo); font-weight:600">Kirish</a>
+    </p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  let selectedRole = 'student';
+
+  document.querySelectorAll('.role-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      selectedRole = tab.dataset.role;
+      document.getElementById('studentFields').style.display = selectedRole === 'student' ? 'block' : 'none';
+      document.getElementById('parentFields').style.display = selectedRole === 'parent' ? 'block' : 'none';
+    });
+  });
+
+  async function handleRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const password2 = document.getElementById('regPassword2').value;
+    const btn = document.getElementById('regBtn');
+
+    if (!name) { showToast("Ismingizni kiriting", 'error'); return; }
+    if (!email) { showToast("Email kiriting", 'error'); return; }
+    if (password.length < 6) { showToast("Parol kamida 6 ta belgi bo'lishi kerak", 'error'); return; }
+    if (password !== password2) { showToast("Parollar mos kelmadi", 'error'); return; }
+
+    btn.disabled = true;
+    btn.textContent = "Ro'yxatdan o'tilmoqda...";
+
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = cred.user.uid;
+
+      const userData = {
+        uid,
+        name,
+        email,
+        role: selectedRole,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'active'
+      };
+
+      if (selectedRole === 'student') {
+        userData.groupCode = document.getElementById('regGroupCode').value.trim();
+        userData.group = '';
+        userData.teacher = '';
+      }
+
+      if (selectedRole === 'parent') {
+        userData.childEmail = document.getElementById('regChildEmail').value.trim();
+        userData.childId = '';
+      }
+
+      await db.collection('users').doc(uid).set(userData);
+
+      await cred.user.updateProfile({ displayName: name });
+
+      showToast("Muvaffaqiyatli ro'yxatdan o'tdingiz!", 'success');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+
+    } catch (err) {
+      console.error(err);
+      const msgs = {
+        'auth/email-already-in-use': "Bu email allaqachon ro'yxatdan o'tgan",
+        'auth/invalid-email': "Email noto'g'ri formatda",
+        'auth/weak-password': "Parol juda oddiy, murakkabrog'ini kiriting"
+      };
+      showToast(msgs[err.code] || err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Ro'yxatdan o'tish";
+    }
+  }
+</script>
+</body>
+</html>

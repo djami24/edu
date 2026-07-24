@@ -7,45 +7,38 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
 <div class="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">EE</div>
     <h1 class="auth-title">Education Express</h1>
     <p class="auth-subtitle">Ta'lim boshqaruv tizimiga xush kelibsiz</p>
 
-    <div class="role-tabs">
-      <button class="role-tab" data-role="admin">Admin</button>
-      <button class="role-tab" data-role="teacher">O'qituvchi</button>
-      <button class="role-tab active" data-role="student">Talaba</button>
-      <button class="role-tab" data-role="parent">Ota-ona</button>
-    </div>
-
     <form id="loginForm">
       <div class="form-group">
         <label class="form-label" for="email">Email</label>
-        <input class="form-input" type="email" id="email" placeholder="you@example.com" value="demo@educationexpress.uz" required>
+        <input class="form-input" type="email" id="email" placeholder="you@example.com" required>
       </div>
       <div class="form-group">
         <label class="form-label" for="password">Parol</label>
-        <input class="form-input" type="password" id="password" placeholder="••••••••" value="demo1234" required>
+        <input class="form-input" type="password" id="password" placeholder="••••••••" required>
       </div>
       <button class="btn btn-primary" type="submit" id="loginBtn">Kirish</button>
     </form>
 
-    <p class="auth-demo-hint">
-      Demo rejimi yoqilgan — istalgan email/parol bilan, yuqoridan<br>
-      rolni tanlab "Kirish" tugmasini bosing.
-    </p>
+    <div style="margin-top:16px; text-align:center;">
+      <p style="font-size:13px; color:var(--color-text-muted); margin-bottom:8px">
+        Hisobingiz yo'qmi?
+        <a href="register.html" style="color:var(--color-indigo); font-weight:600">Ro'yxatdan o'ting</a>
+      </p>
+      <a href="#" onclick="forgotPassword()" style="font-size:13px; color:var(--color-text-muted)">Parolni unutdingizmi?</a>
+    </div>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="js/firebase-config.js"></script>
-<script src="js/demo-data.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
 </body>
