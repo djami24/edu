@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ota-ona paneli — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Ota-ona paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link active" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="results.html">📊 Test natijalari</a>
+    <div class="nav-group-title">Boshqa</div>
+    <a class="nav-link" href="comments.html">💬 O'qituvchi izohlari</a>
+    <a class="nav-link" href="payments.html">💳 To'lov holati</a>
+    <a class="nav-link" href="reports.html">📄 Haftalik hisobot</a>
+    <a class="nav-link" href="contact.html">✉️ O'qituvchi bilan bog'lanish</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Salom, Dilshodbek!</h1><p class="subtitle" id="watching">Farzandingiz akkauntini kuzatyapsiz</p></div>
+      <div class="user-chip"><img src="https://i.pravatar.cc/100?img=13"><div><div class="u-name" id="childName">—</div><div class="u-role" id="childLevel">—</div></div></div>
+    </div>
+
+    <div class="hero-card" style="margin-bottom:20px;">
+      <div><div class="hero-label">Umumiy o'sish</div><div class="hero-value">85%</div><div class="hero-label">O'tgan oyga nisbatan +12%</div></div>
+      <svg width="120" height="60" viewBox="0 0 120 60"><path d="M0 45 Q20 40 30 30 T60 25 T90 15 T120 8" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon">🕒</div><div class="stat-value">22/24</div><div class="stat-label">Kelgan darslar</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">18/20</div><div class="stat-label">Uy vazifalari</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">87%</div><div class="stat-label">O'rtacha ball</div></div>
+      <div class="stat-card"><div class="stat-icon">💳</div><div class="stat-value" id="payStatus">—</div><div class="stat-label">To'lov holati</div></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">O'qituvchi izohi <a class="link" href="comments.html">Barchasi →</a></div>
+        <div id="commentBox"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">To'lov ma'lumoti <a class="link" href="payments.html">Barchasi →</a></div>
+        <div class="list-item"><div><div class="li-title">Keyingi to'lov</div><div class="li-meta">Muddat: <span id="payDue"></span></div></div><span class="pill pill-warning" id="payAmount"></span></div>
+        <div class="list-item"><div><div class="li-title">Oxirgi to'lov</div><div class="li-meta">To'landi: <span id="payLast"></span></div></div><span class="pill pill-success">✓ To'landi</span></div>
+        <button class="btn btn-primary" style="margin-top:10px;">Hozir to'lash</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('parent');
+  const child = DEMO.parentChild;
+  document.getElementById('childName').textContent = child.name;
+  document.getElementById('childLevel').textContent = child.level;
+  document.getElementById('watching').textContent = `${child.name} akkauntini kuzatyapsiz`;
+
+  const c = DEMO.teacherComments[0];
+  document.getElementById('commentBox').innerHTML = `
+    <div class="quote-card">
+      <img src="${c.photo}" alt="">
+      <div><div class="q-name">${c.teacher}</div><div class="q-date">${c.date}</div><div class="q-text">"${c.text}"</div></div>
+    </div>`;
+
+  const p = DEMO.payments;
+  document.getElementById('payDue').textContent = p.next.due;
+  document.getElementById('payAmount').textContent = p.next.amount + " so'm";
+  document.getElementById('payLast').textContent = p.last.paid;
+  document.getElementById('payStatus').textContent = "Kutilmoqda";
+</script>
+</body>
+</html>
