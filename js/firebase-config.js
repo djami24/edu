@@ -11,6 +11,7 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
+// Storage faqat kerak bo'lganda ishlatiladi
+const storage = (typeof firebase.storage === 'function') ? firebase.storage() : null;
 
 const DEMO_MODE = false;
