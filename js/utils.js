@@ -62,6 +62,69 @@ function confirmDialog(title, message){
   });
 }
 
+/* ---------- FORMA OYNASI (Add/Edit modal) ---------- */
+/**
+ * Maydonlar ro'yxati asosida forma oynasini ochadi.
+ * @param {string} title - oyna sarlavhasi
+ * @param {Array<{key:string,label:string,type?:string,options?:Array<{value:string,label:string}>,required?:boolean,default?:any}>} fields
+ * @param {Object} initial - tahrirlashda boshlang'ich qiymatlar (bo'sh bo'lsa - yangi qo'shish)
+ * @returns {Promise<Object|null>} - "Saqlash" bosilsa qiymatlar obyekti, "Bekor qilish" bosilsa null
+ */
+function openFormModal(title, fields, initial = {}){
+  return new Promise((resolve) => {
+    const esc = (v) => String(v === undefined || v === null ? '' : v).replace(/"/g, '&quot;');
+    const fieldsHtml = fields.map(f => {
+      const val = initial[f.key] !== undefined && initial[f.key] !== null ? initial[f.key] : (f.default !== undefined ? f.default : '');
+      if(f.type === 'select'){
+        const opts = f.options.map(o => `<option value="${esc(o.value)}" ${String(o.value) === String(val) ? 'selected' : ''}>${o.label}</option>`).join('');
+        return `<div class="form-group"><label class="form-label">${f.label}</label><select class="form-input" id="mf_${f.key}">${opts}</select></div>`;
+      }
+      return `<div class="form-group"><label class="form-label">${f.label}</label><input class="form-input" type="${f.type || 'text'}" id="mf_${f.key}" value="${esc(val)}"></div>`;
+    }).join('');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box" style="max-width:440px; max-height:85vh; overflow-y:auto;">
+        <h3>${title}</h3>
+        <div>${fieldsHtml}</div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" data-action="cancel">Bekor qilish</button>
+          <button class="btn btn-primary" data-action="ok">Saqlash</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    function close(result){ overlay.remove(); resolve(result); }
+
+    overlay.addEventListener('click', (e) => {
+      if(e.target === overlay || e.target.dataset.action === 'cancel'){ close(null); return; }
+      if(e.target.dataset.action === 'ok'){
+        const result = {};
+        for(const f of fields){
+          const el = document.getElementById('mf_' + f.key);
+          let v = el.value;
+          if(f.type === 'number') v = v === '' ? null : Number(v);
+          result[f.key] = v;
+        }
+        const missing = fields.find(f => f.required && (result[f.key] === '' || result[f.key] === null || result[f.key] === undefined));
+        if(missing){
+          showToast(`Iltimos, "${missing.label}" maydonini to'ldiring`, 'error');
+          return;
+        }
+        close(result);
+      }
+    });
+  });
+}
+
+/* ---------- FIRESTORE XATOLIK XABARI ---------- */
+function firestoreErrorMessage(err){
+  if(err && err.code === 'permission-denied') return "Ruxsat yo'q — bu amal uchun huquqingiz yetarli emas (Firestore Rules tekshiring).";
+  if(err && err.code === 'unavailable') return "Server bilan aloqa yo'q. Internetni tekshiring.";
+  return (err && err.message) ? err.message : "Noma'lum xatolik yuz berdi";
+}
+
 /* ---------- LOADING HOLATI ---------- */
 function showLoading(container){
   container.innerHTML = `<div class="loading-center"><div class="spinner"></div></div>`;
