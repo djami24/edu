@@ -109,7 +109,7 @@
     const values = await openFormModal("Yangi kurs qo'shish", COURSE_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('courses').add(values);
+      await db.collection('courses').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi kurs qo'shildi", 'success');
     } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });

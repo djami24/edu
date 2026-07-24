@@ -39,7 +39,7 @@
       <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-value" id="r1">—</div><div class="stat-label">Jami talabalar</div></div>
       <div class="stat-card"><div class="stat-icon">💳</div><div class="stat-value" id="r2">—</div><div class="stat-label">Oylik daromad</div></div>
       <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="r3">—%</div><div class="stat-label">Davomat darajasi</div></div>
-      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">87%</div><div class="stat-label">O'rtacha test balli</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="r4">—%</div><div class="stat-label">O'rtacha test balli</div></div>
     </div>
 
     <div class="grid grid-2">
@@ -67,13 +67,53 @@
 <script src="../js/charts.js"></script>
 <script>
   guardPage('admin');
-  const st = DEMO.adminStats;
-  document.getElementById('r1').textContent = st.totalStudents;
-  document.getElementById('r2').textContent = st.monthlyIncome + " so'm";
-  document.getElementById('r3').textContent = st.attendanceRate + '%';
 
-  renderLineChart('enrollChart', ['Fev','Mar','Apr','May','Iyun','Iyul'], [180,195,205,220,235,246], "Talabalar");
-  renderBarChart('groupChart', DEMO.teachers.map(t=>t.name), DEMO.teachers.map(t=>t.students), "Talabalar");
+  let studentsData = [], paymentsData = [], testsData = [];
+
+  function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+  function monthLabel(d){ return ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'][d.getMonth()]; }
+
+  function recompute(){
+    document.getElementById('r1').textContent = studentsData.length;
+
+    const now = new Date();
+    const curMonth = monthKey(now);
+    const monthlyIncome = paymentsData
+      .filter(p => p.status === 'paid' && typeof p.dueDate === 'string' && p.dueDate.startsWith(curMonth))
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    document.getElementById('r2').textContent = monthlyIncome.toLocaleString('uz-UZ') + " so'm";
+
+    const attendanceRate = studentsData.length
+      ? Math.round(studentsData.reduce((s,x) => s + (Number(x.attendance) || 0), 0) / studentsData.length)
+      : 0;
+    document.getElementById('r3').textContent = attendanceRate + '%';
+
+    const scored = testsData.filter(t => t.avgScore !== null && t.avgScore !== undefined && t.avgScore !== '');
+    const avgTestScore = scored.length
+      ? Math.round(scored.reduce((s,t) => s + Number(t.avgScore), 0) / scored.length)
+      : 0;
+    document.getElementById('r4').textContent = avgTestScore + '%';
+
+    const months = [];
+    for(let i = 5; i >= 0; i--) months.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
+    const counts = months.map(d => {
+      const key = monthKey(d);
+      return studentsData.filter(s => {
+        if(!s.createdAt || !s.createdAt.seconds) return true;
+        return monthKey(new Date(s.createdAt.seconds*1000)) <= key;
+      }).length;
+    });
+    renderLineChart('enrollChart', months.map(monthLabel), counts, "Talabalar", null);
+
+    const byTeacher = {};
+    studentsData.forEach(s => { byTeacher[s.teacher] = (byTeacher[s.teacher] || 0) + 1; });
+    const teacherNames = Object.keys(byTeacher);
+    renderBarChart('groupChart', teacherNames, teacherNames.map(t => byTeacher[t]), "Talabalar");
+  }
+
+  db.collection('students').onSnapshot(s => { studentsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('payments').onSnapshot(s => { paymentsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('tests').onSnapshot(s => { testsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
 </script>
 </body>
 </html>

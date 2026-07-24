@@ -45,8 +45,8 @@
     </div>
 
     <div class="grid grid-4" style="margin-bottom:20px;">
-      <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-value" id="s1">—</div><div class="stat-label">Jami talabalar</div><div class="stat-delta up">+12 shu oy</div></div>
-      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="s2">—</div><div class="stat-label">Faol guruhlar</div><div class="stat-delta up">+2 shu oy</div></div>
+      <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-value" id="s1">—</div><div class="stat-label">Jami talabalar</div><div class="stat-delta up" id="s1Delta"></div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="s2">—</div><div class="stat-label">Faol guruhlar</div><div class="stat-delta up" id="s2Delta"></div></div>
       <div class="stat-card"><div class="stat-icon">👩‍🏫</div><div class="stat-value" id="s3">—</div><div class="stat-label">O'qituvchilar</div></div>
       <div class="stat-card"><div class="stat-icon">👪</div><div class="stat-value" id="s4">—</div><div class="stat-label">Ota-onalar</div></div>
     </div>
@@ -57,7 +57,7 @@
         <svg width="90" height="50" viewBox="0 0 90 50"><path d="M0 40 Q15 35 25 25 T50 20 T75 8 T90 5" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
       </div>
       <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="s6">—%</div><div class="stat-label">Davomat darajasi</div></div>
-      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">87%</div><div class="stat-label">O'rtacha test balli</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="avgTestScore">—%</div><div class="stat-label">O'rtacha test balli</div></div>
     </div>
 
     <div class="grid grid-2" style="margin-bottom:20px;">
@@ -96,27 +96,89 @@
 <script src="../js/charts.js"></script>
 <script>
   guardPage('admin');
-  const st = DEMO.adminStats;
-  document.getElementById('s1').textContent = st.totalStudents;
-  document.getElementById('s2').textContent = st.activeGroups;
-  document.getElementById('s3').textContent = st.teachers;
-  document.getElementById('s4').textContent = st.parents;
-  document.getElementById('s5').textContent = st.monthlyIncome;
-  document.getElementById('s6').textContent = st.attendanceRate + '%';
 
-  renderLineChart('enrollChart', ['Fev','Mar','Apr','May','Iyun','Iyul'], [180,195,205,220,235,246], "Talabalar");
-  renderBarChart('groupChart', DEMO.teachers.map(t=>t.name), DEMO.teachers.map(t=>t.students), "Talabalar");
+  let studentsData = [], teachersData = [], parentsData = [], groupsData = [], paymentsData = [], testsData = [], homeworkData = [];
 
-  document.getElementById('activityList').innerHTML = DEMO.recentActivities.map(a => `
-    <div class="list-item"><div><div class="li-title" style="font-size:13px;">${a.text}</div><div class="li-meta">${a.time}</div></div></div>
-  `).join('');
+  function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+  function monthLabel(d){ return ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'][d.getMonth()]; }
 
-  document.getElementById('classList').innerHTML = DEMO.upcomingClasses.map(c => `
-    <div class="list-item">
-      <div><div class="li-title">${c.group}</div><div class="li-meta">${c.teacher} • ${c.room}</div></div>
-      <span class="pill pill-info">${c.time}</span>
-    </div>
-  `).join('');
+  function recompute(){
+    document.getElementById('s1').textContent = studentsData.length;
+    document.getElementById('s2').textContent = groupsData.length;
+    document.getElementById('s3').textContent = teachersData.length;
+    document.getElementById('s4').textContent = parentsData.length;
+
+    const now = new Date();
+    const curMonth = monthKey(now);
+
+    const newStudents = studentsData.filter(s => s.createdAt && s.createdAt.seconds && monthKey(new Date(s.createdAt.seconds*1000)) === curMonth).length;
+    const newGroups = groupsData.filter(g => g.createdAt && g.createdAt.seconds && monthKey(new Date(g.createdAt.seconds*1000)) === curMonth).length;
+    document.getElementById('s1Delta').textContent = `+${newStudents} shu oy`;
+    document.getElementById('s2Delta').textContent = `+${newGroups} shu oy`;
+
+    const monthlyIncome = paymentsData
+      .filter(p => p.status === 'paid' && typeof p.dueDate === 'string' && p.dueDate.startsWith(curMonth))
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    document.getElementById('s5').textContent = monthlyIncome.toLocaleString('uz-UZ');
+
+    const attendanceRate = studentsData.length
+      ? Math.round(studentsData.reduce((s,x) => s + (Number(x.attendance) || 0), 0) / studentsData.length)
+      : 0;
+    document.getElementById('s6').textContent = attendanceRate + '%';
+
+    const scored = testsData.filter(t => t.avgScore !== null && t.avgScore !== undefined && t.avgScore !== '');
+    const avgTestScore = scored.length
+      ? Math.round(scored.reduce((s,t) => s + Number(t.avgScore), 0) / scored.length)
+      : 0;
+    document.getElementById('avgTestScore').textContent = avgTestScore + '%';
+
+    const months = [];
+    for(let i = 5; i >= 0; i--) months.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
+    const counts = months.map(d => {
+      const key = monthKey(d);
+      return studentsData.filter(s => {
+        if(!s.createdAt || !s.createdAt.seconds) return true; // eski yozuv — sana yo'q, doim hisoblanadi
+        return monthKey(new Date(s.createdAt.seconds*1000)) <= key;
+      }).length;
+    });
+    renderLineChart('enrollChart', months.map(monthLabel), counts, "Talabalar", null);
+
+    const byTeacher = {};
+    studentsData.forEach(s => { byTeacher[s.teacher] = (byTeacher[s.teacher] || 0) + 1; });
+    const teacherNames = Object.keys(byTeacher);
+    renderBarChart('groupChart', teacherNames, teacherNames.map(t => byTeacher[t]), "Talabalar");
+
+    const activities = [];
+    studentsData.forEach(s => s.createdAt && s.createdAt.seconds && activities.push({ text: `Yangi talaba qo'shildi: ${s.name}`, ts: s.createdAt.seconds }));
+    homeworkData.forEach(h => h.createdAt && h.createdAt.seconds && activities.push({ text: `Yangi vazifa: ${h.title}`, ts: h.createdAt.seconds }));
+    testsData.forEach(t => t.createdAt && t.createdAt.seconds && activities.push({ text: `Yangi test: ${t.title}`, ts: t.createdAt.seconds }));
+    paymentsData.forEach(p => p.createdAt && p.createdAt.seconds && activities.push({ text: `To'lov qo'shildi: ${p.student}`, ts: p.createdAt.seconds }));
+    activities.sort((a,b) => b.ts - a.ts);
+    const activityList = document.getElementById('activityList');
+    activityList.innerHTML = activities.length === 0
+      ? `<div class="li-meta" style="padding:10px;">Hozircha faoliyat yo'q</div>`
+      : activities.slice(0,6).map(a => `
+        <div class="list-item"><div><div class="li-title" style="font-size:13px;">${a.text}</div><div class="li-meta">${new Date(a.ts*1000).toLocaleString('uz-UZ')}</div></div></div>
+      `).join('');
+
+    const classList = document.getElementById('classList');
+    classList.innerHTML = groupsData.length === 0
+      ? `<div class="li-meta" style="padding:10px;">Guruhlar topilmadi</div>`
+      : groupsData.slice(0,6).map(g => `
+        <div class="list-item">
+          <div><div class="li-title">${g.name}</div><div class="li-meta">${g.teacher || ''}</div></div>
+          <span class="pill pill-info">${g.schedule || '—'}</span>
+        </div>
+      `).join('');
+  }
+
+  db.collection('students').onSnapshot(s => { studentsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('teachers').onSnapshot(s => { teachersData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('parents').onSnapshot(s => { parentsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('groups').onSnapshot(s => { groupsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('payments').onSnapshot(s => { paymentsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('tests').onSnapshot(s => { testsData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
+  db.collection('homework').onSnapshot(s => { homeworkData = s.docs.map(d => ({id:d.id, ...d.data()})); recompute(); }, err => showToast(firestoreErrorMessage(err), 'error'));
 </script>
 </body>
 </html>

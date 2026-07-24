@@ -126,7 +126,7 @@
     const values = await openFormModal("Yangi ota-ona qo'shish", PARENT_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('parents').add(values);
+      await db.collection('parents').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi ota-ona qo'shildi", 'success');
     } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });

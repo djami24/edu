@@ -126,7 +126,7 @@
     const values = await openFormModal("Yangi o'qituvchi qo'shish", TEACHER_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('teachers').add(values);
+      await db.collection('teachers').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi o'qituvchi qo'shildi", 'success');
     } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });

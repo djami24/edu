@@ -160,7 +160,7 @@
     const values = await openFormModal("Yangi talaba qo'shish", STUDENT_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('students').add(values);
+      await db.collection('students').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi talaba qo'shildi", 'success');
     } catch(err){
       showToast(firestoreErrorMessage(err), 'error');

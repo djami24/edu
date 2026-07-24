@@ -129,7 +129,7 @@
     const values = await openFormModal("Yangi to'lov qo'shish", PAYMENT_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('payments').add(values);
+      await db.collection('payments').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi to'lov qo'shildi", 'success');
     } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });

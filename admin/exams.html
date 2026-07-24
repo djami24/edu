@@ -113,7 +113,7 @@
     const values = await openFormModal("Yangi test qo'shish", EXAM_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('tests').add(values);
+      await db.collection('tests').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi test qo'shildi", 'success');
     } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });

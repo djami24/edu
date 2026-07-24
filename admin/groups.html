@@ -127,7 +127,7 @@
     const values = await openFormModal("Yangi guruh qo'shish", GROUP_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('groups').add(values);
+      await db.collection('groups').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi guruh qo'shildi", 'success');
     } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });

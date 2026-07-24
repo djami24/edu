@@ -121,7 +121,7 @@
     const values = await openFormModal("Yangi vazifa qo'shish", HW_FIELDS, {});
     if(!values) return;
     try {
-      await db.collection('homework').add(values);
+      await db.collection('homework').add({ ...values, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       showToast("Yangi vazifa qo'shildi", 'success');
     } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });
