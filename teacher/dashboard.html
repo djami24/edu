@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O'qituvchi paneli — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link active" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Xush kelibsiz, Mr. Abdurahim!</h1><p class="subtitle">Bugungi darslaringiz va vazifalaringiz</p></div>
+      <div class="user-chip"><img src="https://i.pravatar.cc/100?img=12"><div><div class="u-name">Mr. Abdurahim</div><div class="u-role">O'qituvchi</div></div></div>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">2</div><div class="stat-label">Mening guruhlarim</div></div>
+      <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-value">26</div><div class="stat-label">Jami talabalar</div></div>
+      <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-value">4</div><div class="stat-label">Tekshirilmagan vazifalar</div></div>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:20px;">
+      <!-- Davomat belgilash -->
+      <div class="card">
+        <div class="card-title">Bugungi davomat — Int-B1 Morning</div>
+        <div id="attendanceForm"></div>
+        <button class="btn btn-primary" style="margin-top:10px;" onclick="saveAttendance()">Davomatni saqlash</button>
+      </div>
+
+      <!-- Uy vazifa berish -->
+      <div class="card">
+        <div class="card-title">Yangi uy vazifa berish</div>
+        <div class="form-group"><label class="form-label">Guruh</label>
+          <select class="form-input" id="hwGroup"><option>Int-B1 Morning</option><option>Int-B1 Evening</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Sarlavha</label><input class="form-input" id="hwTitle" placeholder="Masalan: Present Perfect – Exercises"></div>
+        <div class="form-group"><label class="form-label">Topshirish muddati</label><input class="form-input" type="date" id="hwDue"></div>
+        <button class="btn btn-primary" onclick="assignHomework()">Vazifani yuborish</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <!-- Haftalik izoh -->
+      <div class="card">
+        <div class="card-title">Haftalik izoh yozish</div>
+        <div class="form-group"><label class="form-label">Talaba</label>
+          <select class="form-input" id="commentStudent"><option>Azizbek Dilshodov</option><option>Malika Yusupova</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Izoh</label><textarea class="form-input" id="commentText" rows="4" placeholder="Talaba haqida izoh yozing..."></textarea></div>
+        <button class="btn btn-primary" onclick="sendComment()">Izohni yuborish</button>
+      </div>
+
+      <!-- Talaba progressi -->
+      <div class="card">
+        <div class="card-title">Talabalar progressi</div>
+        <div id="progressList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  // Davomat formasi - guruh talabalari ro'yxati (demo)
+  const groupStudents = DEMO.students.slice(0,4);
+  const attWrap = document.getElementById('attendanceForm');
+  groupStudents.forEach(s => {
+    attWrap.innerHTML += `
+      <div class="list-item">
+        <div style="display:flex; align-items:center; gap:10px;"><img class="avatar-sm" src="${s.photo}"><span style="font-weight:600; font-size:13px;">${s.name}</span></div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-sm btn-ghost att-btn" data-id="${s.id}" data-v="present" onclick="markAtt(this)">Keldi</button>
+          <button class="btn btn-sm btn-ghost att-btn" data-id="${s.id}" data-v="late" onclick="markAtt(this)">Kechikdi</button>
+          <button class="btn btn-sm btn-ghost att-btn" data-id="${s.id}" data-v="absent" onclick="markAtt(this)">Kelmadi</button>
+        </div>
+      </div>`;
+  });
+
+  function markAtt(btn){
+    const row = btn.closest('.list-item');
+    row.querySelectorAll('.att-btn').forEach(b => b.classList.remove('btn-primary'));
+    btn.classList.add('btn-primary');
+  }
+
+  function saveAttendance(){
+    // Haqiqiy loyihada: har bir talaba uchun
+    // db.collection('attendance').add({studentId, groupId, date, status})
+    showToast("Davomat muvaffaqiyatli saqlandi", 'success');
+  }
+
+  function assignHomework(){
+    const title = document.getElementById('hwTitle').value.trim();
+    if(!title){ showToast("Iltimos, sarlavha kiriting", 'error'); return; }
+    // Haqiqiy loyihada: db.collection('homework').add({title, groupId, dueDate, teacherId})
+    showToast(`"${title}" vazifasi guruhga yuborildi`, 'success');
+    document.getElementById('hwTitle').value = '';
+  }
+
+  function sendComment(){
+    const text = document.getElementById('commentText').value.trim();
+    if(!text){ showToast("Iltimos, izoh matnini kiriting", 'error'); return; }
+    // Haqiqiy loyihada: db.collection('comments').add({studentId, teacherId, text, date})
+    showToast("Izoh talaba va ota-onaga yuborildi", 'success');
+    document.getElementById('commentText').value = '';
+  }
+
+  document.getElementById('progressList').innerHTML = groupStudents.map(s => `
+    <div class="progress-row">
+      <div class="p-label">${s.name.split(' ')[0]}</div>
+      <div class="progress-track"><div class="progress-fill" style="width:${s.attendance}%"></div></div>
+      <div class="p-value">${s.attendance}%</div>
+    </div>`).join('');
+</script>
+</body>
+</html>
