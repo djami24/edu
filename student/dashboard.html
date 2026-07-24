@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bosh sahifa — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ===== SIDEBAR (desktop) ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-badge">EE</div>
+      <div><div class="name">Education Express</div><div class="role">Talaba paneli</div></div>
+    </div>
+
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link active" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="results.html">📊 Natijalar</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="schedule.html">📅 Dars jadvali</a>
+
+    <div class="nav-group-title">Boshqa</div>
+    <a class="nav-link" href="comments.html">💬 O'qituvchi izohlari</a>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar <span class="badge">3</span></a>
+    <a class="nav-link" href="profile.html">👤 Profil</a>
+
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div>
+        <h1 id="greeting">Salom!</h1>
+        <p class="subtitle" id="subGreeting">Bugungi holatingiz bilan tanishing</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="toggleDarkMode()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
+        <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="dot"></span></button>
+        <div class="user-chip">
+          <img id="userPhoto" src="" alt="">
+          <div><div class="u-name" id="userName">—</div><div class="u-role" id="userLevel">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Umumiy o'sish hero -->
+    <div class="hero-card" style="margin-bottom:20px;">
+      <div>
+        <div class="hero-label">Umumiy o'sish</div>
+        <div class="hero-value" id="overallGrowth">—%</div>
+        <div class="hero-label" id="growthDelta">O'tgan oyga nisbatan</div>
+      </div>
+      <svg width="120" height="60" viewBox="0 0 120 60"><path d="M0 45 Q20 40 30 30 T60 25 T90 15 T120 8" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+    </div>
+
+    <!-- Statistik kartalar -->
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="stat-card">
+        <div class="stat-icon">🕒</div>
+        <div class="stat-value" id="statAttendance">—</div>
+        <div class="stat-label">Kelgan darslar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="statHomework">—</div>
+        <div class="stat-label">Topshirilgan</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value" id="statTest">—</div>
+        <div class="stat-label">O'rtacha ball</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-value" id="statActivity">—</div>
+        <div class="stat-label">Faollik</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <!-- So'nggi o'qituvchi izohi -->
+      <div class="card">
+        <div class="card-title">Oxirgi o'qituvchi izohi <a class="link" href="comments.html">Barchasini ko'rish →</a></div>
+        <div id="lastComment"></div>
+      </div>
+
+      <!-- Yaqin darslar -->
+      <div class="card">
+        <div class="card-title">Yaqin uy vazifalari <a class="link" href="homework.html">Barchasi →</a></div>
+        <div id="homeworkPreview"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== BOTTOM NAV (mobil) ===== -->
+  <nav class="bottom-nav">
+    <a class="active" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Bosh sahifa</a>
+    <a href="results.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Natijalar</a>
+    <a href="homework.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Uy vazifalar</a>
+    <a href="attendance.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Davomat</a>
+    <a href="menu.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Menu</a>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('student');
+
+  // Bu yerda haqiqiy loyihada Firestore'dan quyidagicha o'qiladi:
+  // const doc = await db.collection('students').doc(uid).get();
+  const u = DEMO.currentUser;
+  document.getElementById('greeting').textContent = `Salom, ${u.name.split(' ')[0]}!`;
+  document.getElementById('subGreeting').textContent = `${u.level} • ${u.group}`;
+  document.getElementById('userPhoto').src = u.photo;
+  document.getElementById('userName').textContent = u.name;
+  document.getElementById('userLevel').textContent = u.level;
+
+  document.getElementById('overallGrowth').textContent = '85%';
+  document.getElementById('growthDelta').textContent = "O'tgan oyga nisbatan +12%";
+
+  const s = DEMO.dashboardStats;
+  document.getElementById('statAttendance').textContent = s.attendance;
+  document.getElementById('statHomework').textContent = s.homework;
+  document.getElementById('statTest').textContent = s.testScore;
+  document.getElementById('statActivity').textContent = s.activity;
+
+  const c = DEMO.teacherComments[0];
+  document.getElementById('lastComment').innerHTML = `
+    <div class="quote-card">
+      <img src="${c.photo}" alt="">
+      <div>
+        <div class="q-name">${c.teacher}</div>
+        <div class="q-date">${c.date}</div>
+        <div class="q-text">"${c.text}"</div>
+      </div>
+    </div>`;
+
+  const hwWrap = document.getElementById('homeworkPreview');
+  DEMO.homeworks.slice(0,3).forEach(hw => {
+    const pillClass = hw.status === 'done' ? 'pill-success' : hw.status === 'checking' ? 'pill-info' : 'pill-danger';
+    const pillText = hw.status === 'done' ? (hw.score + '%') : hw.status === 'checking' ? 'Tekshirilmoqda' : 'Topshirilmagan';
+    hwWrap.innerHTML += `
+      <div class="list-item">
+        <div>
+          <div class="li-title">${hw.title}</div>
+          <div class="li-meta">Muddat: ${hw.due}</div>
+        </div>
+        <span class="pill ${pillClass}">${pillText}</span>
+      </div>`;
+  });
+</script>
+</body>
+</html>

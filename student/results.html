@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Natijalar — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-badge">EE</div>
+      <div><div class="name">Education Express</div><div class="role">Talaba paneli</div></div>
+    </div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link active" href="results.html">📊 Natijalar</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="schedule.html">📅 Dars jadvali</a>
+    <div class="nav-group-title">Boshqa</div>
+    <a class="nav-link" href="comments.html">💬 O'qituvchi izohlari</a>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar <span class="badge">3</span></a>
+    <a class="nav-link" href="profile.html">👤 Profil</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Natijalar</h1><p class="subtitle">Test va o'zlashtirish statistikasi</p></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active">Umumiy</button>
+      <button class="tab-btn">Testlar</button>
+      <button class="tab-btn">CEFR Progress</button>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">O'rtacha test natijasi</div>
+      <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:12px;">
+        <span style="font-size:32px; font-weight:800;" id="avgScore">—%</span>
+        <span class="stat-delta up">O'tgan oyga nisbatan +8%</span>
+      </div>
+      <div style="height:220px;"><canvas id="trendChart"></canvas></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">Kuchli tomonlar</div>
+        <div id="strengthsList"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Yaxshilash kerak bo'lgan joylar</div>
+        <div id="weaknessesList"></div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Bosh sahifa</a>
+    <a class="active" href="results.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Natijalar</a>
+    <a href="homework.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Uy vazifalar</a>
+    <a href="attendance.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Davomat</a>
+    <a href="menu.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Menu</a>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/charts.js"></script>
+<script>
+  guardPage('student');
+  const r = DEMO.results;
+  document.getElementById('avgScore').textContent = r.average + '%';
+  renderLineChart('trendChart', r.trendLabels, r.trend, "O'rtacha ball");
+
+  function renderProgressList(container, items, warn=false){
+    container.innerHTML = items.map(it => `
+      <div class="progress-row">
+        <div class="p-label">${it.name}</div>
+        <div class="progress-track"><div class="progress-fill ${warn ? 'warn' : ''}" style="width:${it.value}%"></div></div>
+        <div class="p-value">${it.value}%</div>
+      </div>`).join('');
+  }
+  renderProgressList(document.getElementById('strengthsList'), r.strengths, false);
+  renderProgressList(document.getElementById('weaknessesList'), r.weaknesses, true);
+</script>
+</body>
+</html>

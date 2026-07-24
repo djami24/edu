@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bildirishnomalar — Education Express</title><link rel="stylesheet" href="../css/style.css"></head>
+<body><div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Talaba paneli</div></div></div>
+  <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+  <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+  <a class="nav-link active" href="notifications.html">🔔 Bildirishnomalar</a>
+  <a class="nav-link" href="menu.html">☰ Menu</a>
+  <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+</aside>
+<main class="main">
+  <div class="topbar"><button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><h1>Bildirishnomalar</h1></div>
+  <div class="card">
+    <div class="list-item"><div><div class="li-title">Yangi uy vazifa qo'shildi</div><div class="li-meta">Grammar Review — 2 soat oldin</div></div><span class="pill pill-info">Yangi</span></div>
+    <div class="list-item"><div><div class="li-title">To'lov muddati yaqinlashmoqda</div><div class="li-meta">25.07.2026 gacha — kecha</div></div><span class="pill pill-warning">Eslatma</span></div>
+    <div class="list-item"><div><div class="li-title">Test natijasi e'lon qilindi</div><div class="li-meta">Listening Practice — 90%</div></div><span class="pill pill-success">Natija</span></div>
+  </div>
+</main>
+<nav class="bottom-nav">
+  <a href="dashboard.html">🏠<br>Bosh sahifa</a><a href="results.html">📊<br>Natijalar</a><a href="homework.html">📝<br>Uy vazifalar</a><a href="attendance.html">🕒<br>Davomat</a><a class="active" href="menu.html">☰<br>Menu</a>
+</nav>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script><script src="../js/demo-data.js"></script><script src="../js/utils.js"></script><script src="../js/auth.js"></script>
+<script>guardPage('student');</script>
+</body></html>

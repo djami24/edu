@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-badge">EE</div>
+      <div><div class="name">Education Express</div><div class="role">Talaba paneli</div></div>
+    </div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="results.html">📊 Natijalar</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="schedule.html">📅 Dars jadvali</a>
+    <div class="nav-group-title">Boshqa</div>
+    <a class="nav-link active" href="menu.html">☰ Menu</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <h1>Menu</h1>
+    </div>
+
+    <div class="card" style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+      <img src="" id="menuPhoto" style="width:56px;height:56px;border-radius:50%;object-fit:cover;">
+      <div><div class="li-title" id="menuName" style="font-size:16px;"></div><div class="li-meta" id="menuLevel"></div></div>
+    </div>
+
+    <div class="card" style="padding:8px;">
+      <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar <span class="badge">3</span></a>
+      <a class="nav-link" href="schedule.html">📅 Dars jadvali</a>
+      <a class="nav-link" href="teachers.html">👥 O'qituvchilar</a>
+      <a class="nav-link" href="materials.html">📄 Materiallar</a>
+      <a class="nav-link" href="achievements.html">🏆 Yutuqlar</a>
+      <a class="nav-link" href="feedback.html">💬 Ota-ona fikri</a>
+      <a class="nav-link" href="settings.html">⚙️ Sozlamalar</a>
+      <a class="nav-link" style="color:var(--color-danger)" href="#" onclick="logout()">↩ Chiqish</a>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Bosh sahifa</a>
+    <a href="results.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Natijalar</a>
+    <a href="homework.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Uy vazifalar</a>
+    <a href="attendance.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Davomat</a>
+    <a class="active" href="menu.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>Menu</a>
+  </nav>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('student');
+  const u = DEMO.currentUser;
+  document.getElementById('menuPhoto').src = u.photo;
+  document.getElementById('menuName').textContent = u.name;
+  document.getElementById('menuLevel').textContent = u.level;
+</script>
+</body>
+</html>

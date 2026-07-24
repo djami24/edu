@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil — Education Express</title><link rel="stylesheet" href="../css/style.css"></head>
+<body><div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Talaba paneli</div></div></div>
+  <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+  <a class="nav-link active" href="profile.html">👤 Profil</a>
+  <a class="nav-link" href="menu.html">☰ Menu</a>
+  <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+</aside>
+<main class="main">
+  <div class="topbar"><button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><h1>Profil</h1></div>
+  <div class="card" style="text-align:center; padding:32px;">
+    <img id="pPhoto" style="width:88px;height:88px;border-radius:50%;object-fit:cover;margin:0 auto 14px;">
+    <div id="pName" style="font-size:18px; font-weight:800;"></div>
+    <div id="pLevel" class="li-meta"></div>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <div class="list-item"><div class="li-title">Guruh</div><span id="pGroup" class="li-meta"></span></div>
+    <div class="list-item"><div class="li-title">O'qituvchi</div><span id="pTeacher" class="li-meta"></span></div>
+  </div>
+</main>
+<nav class="bottom-nav">
+  <a href="dashboard.html">🏠<br>Bosh sahifa</a><a href="results.html">📊<br>Natijalar</a><a href="homework.html">📝<br>Uy vazifalar</a><a href="attendance.html">🕒<br>Davomat</a><a class="active" href="menu.html">☰<br>Menu</a>
+</nav>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script><script src="../js/demo-data.js"></script><script src="../js/utils.js"></script><script src="../js/auth.js"></script>
+<script>
+guardPage('student');
+const u = DEMO.currentUser;
+document.getElementById('pPhoto').src = u.photo;
+document.getElementById('pName').textContent = u.name;
+document.getElementById('pLevel').textContent = u.level;
+document.getElementById('pGroup').textContent = u.group;
+document.getElementById('pTeacher').textContent = u.teacher;
+</script>
+</body></html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dars jadvali — Education Express</title><link rel="stylesheet" href="../css/style.css"></head>
+<body><div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Talaba paneli</div></div></div>
+  <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+  <a class="nav-link" href="results.html">📊 Natijalar</a>
+  <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+  <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+  <a class="nav-link active" href="schedule.html">📅 Dars jadvali</a>
+  <a class="nav-link" href="menu.html">☰ Menu</a>
+  <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+</aside>
+<main class="main">
+  <div class="topbar"><button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><h1>Dars jadvali</h1></div>
+  <div class="card">
+    <div class="list-item"><div><div class="li-title">Dushanba, Chorshanba, Juma</div><div class="li-meta">Int-B1 Morning • Xona 3</div></div><span class="pill pill-info">09:00 - 10:30</span></div>
+    <div class="list-item"><div><div class="li-title">Seshanba, Payshanba</div><div class="li-meta">Speaking Club • Xona 5</div></div><span class="pill pill-info">15:00 - 16:00</span></div>
+  </div>
+</main>
+<nav class="bottom-nav">
+  <a href="dashboard.html">🏠<br>Bosh sahifa</a><a href="results.html">📊<br>Natijalar</a><a href="homework.html">📝<br>Uy vazifalar</a><a href="attendance.html">🕒<br>Davomat</a><a class="active" href="menu.html">☰<br>Menu</a>
+</nav>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script><script src="../js/demo-data.js"></script><script src="../js/utils.js"></script><script src="../js/auth.js"></script>
+<script>guardPage('student');</script>
+</body></html>
