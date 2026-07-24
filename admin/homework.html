@@ -56,12 +56,26 @@
 <script>
   guardPage('admin');
 
-  let allHw = [...DEMO.homeworkAdmin];
+  const HW_FIELDS = [
+    { key: 'title', label: 'Sarlavha', required: true },
+    { key: 'group', label: 'Guruh', required: true },
+    { key: 'given', label: 'Berilgan sana', type: 'date', required: true },
+    { key: 'due', label: 'Muddat', type: 'date', required: true },
+    { key: 'submitted', label: 'Topshirganlar soni', type: 'number', default: 0 },
+    { key: 'total', label: 'Jami talabalar', type: 'number', default: 0 }
+  ];
+
+  let allHw = [];
+
+  db.collection('homework').onSnapshot((snapshot) => {
+    allHw = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTable();
+  }, (err) => showToast(firestoreErrorMessage(err), 'error'));
 
   function renderTable(){
     const tbody = document.getElementById('hwBody');
     tbody.innerHTML = allHw.map(h => {
-      const pct = Math.round((h.submitted / h.total) * 100);
+      const pct = h.total ? Math.round((h.submitted / h.total) * 100) : 0;
       return `
       <tr>
         <td style="font-weight:600;">${h.title}</td>
@@ -75,32 +89,42 @@
           </div>
         </td>
         <td style="text-align:right;">
-          <button class="btn btn-ghost btn-sm" onclick="editHw(${h.id})">Tahrirlash</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteHw(${h.id})">O'chirish</button>
+          <button class="btn btn-ghost btn-sm" onclick="editHw('${h.id}')">Tahrirlash</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteHw('${h.id}')">O'chirish</button>
         </td>
       </tr>`;
     }).join('');
   }
 
-  function editHw(id){
-    showToast(`"${allHw.find(h=>h.id===id).title}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  async function editHw(id){
+    const h = allHw.find(x => x.id === id);
+    const values = await openFormModal(`"${h.title}" ni tahrirlash`, HW_FIELDS, h);
+    if(!values) return;
+    try {
+      await db.collection('homework').doc(id).update(values);
+      showToast("Vazifa ma'lumotlari yangilandi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   }
 
   async function deleteHw(id){
     const h = allHw.find(x => x.id === id);
     const ok = await confirmDialog("Vazifani o'chirish", `"${h.title}" vazifasini o'chirmoqchimisiz?`);
     if(ok){
-      allHw = allHw.filter(x => x.id !== id);
-      renderTable();
-      showToast("Vazifa muvaffaqiyatli o'chirildi", 'success');
+      try {
+        await db.collection('homework').doc(id).delete();
+        showToast("Vazifa muvaffaqiyatli o'chirildi", 'success');
+      } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
     }
   }
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi vazifa qo'shish oynasi ochiladi (demo)", 'info');
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi vazifa qo'shish", HW_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('homework').add(values);
+      showToast("Yangi vazifa qo'shildi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });
-
-  renderTable();
 </script>
 </body>
 </html>

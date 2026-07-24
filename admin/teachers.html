@@ -63,8 +63,21 @@
 <script>
   guardPage('admin');
 
-  let allTeachers = [...DEMO.teachers];
+  const TEACHER_FIELDS = [
+    { key: 'name', label: 'Ism familiya', required: true },
+    { key: 'subject', label: 'Fan', required: true },
+    { key: 'groups', label: 'Guruhlar soni', type: 'number', default: 0 },
+    { key: 'students', label: 'Talabalar soni', type: 'number', default: 0 },
+    { key: 'photo', label: 'Rasm URL (ixtiyoriy)', default: 'https://i.pravatar.cc/100' }
+  ];
+
+  let allTeachers = [];
   let query = '';
+
+  db.collection('teachers').onSnapshot((snapshot) => {
+    allTeachers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTable();
+  }, (err) => showToast(firestoreErrorMessage(err), 'error'));
 
   function renderTable(){
     const filtered = filterList(allTeachers, query, ['name','subject']);
@@ -79,8 +92,8 @@
           <td>${t.groups}</td>
           <td>${t.students}</td>
           <td style="text-align:right;">
-            <button class="btn btn-ghost btn-sm" onclick="editTeacher(${t.id})">Tahrirlash</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">O'chirish</button>
+            <button class="btn btn-ghost btn-sm" onclick="editTeacher('${t.id}')">Tahrirlash</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">O'chirish</button>
           </td>
         </tr>`).join('');
     }
@@ -88,25 +101,35 @@
 
   document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; renderTable(); });
 
-  function editTeacher(id){
-    showToast(`"${allTeachers.find(t=>t.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  async function editTeacher(id){
+    const t = allTeachers.find(x => x.id === id);
+    const values = await openFormModal(`"${t.name}" ni tahrirlash`, TEACHER_FIELDS, t);
+    if(!values) return;
+    try {
+      await db.collection('teachers').doc(id).update(values);
+      showToast("O'qituvchi ma'lumotlari yangilandi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   }
 
   async function deleteTeacher(id){
     const t = allTeachers.find(x => x.id === id);
     const ok = await confirmDialog("O'qituvchini o'chirish", `"${t.name}" ni ro'yxatdan o'chirmoqchimisiz?`);
     if(ok){
-      allTeachers = allTeachers.filter(x => x.id !== id);
-      renderTable();
-      showToast("O'qituvchi muvaffaqiyatli o'chirildi", 'success');
+      try {
+        await db.collection('teachers').doc(id).delete();
+        showToast("O'qituvchi muvaffaqiyatli o'chirildi", 'success');
+      } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
     }
   }
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi o'qituvchi qo'shish oynasi ochiladi (demo)", 'info');
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi o'qituvchi qo'shish", TEACHER_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('teachers').add(values);
+      showToast("Yangi o'qituvchi qo'shildi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });
-
-  renderTable();
 </script>
 </body>
 </html>

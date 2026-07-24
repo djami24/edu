@@ -63,9 +63,21 @@
 <script>
   guardPage('admin');
 
-  // Haqiqiy loyihada: let allParents = []; db.collection('parents').onSnapshot(...)
-  let allParents = [...DEMO.parents];
+  const PARENT_FIELDS = [
+    { key: 'name', label: 'Ism familiya', required: true },
+    { key: 'child', label: 'Farzand ismi', required: true },
+    { key: 'phone', label: 'Telefon', required: true },
+    { key: 'status', label: 'Holat', type: 'select', options: [{value:'active', label:'Faol'},{value:'inactive', label:'Nofaol'}], default: 'active' },
+    { key: 'photo', label: 'Rasm URL (ixtiyoriy)', default: 'https://i.pravatar.cc/100' }
+  ];
+
+  let allParents = [];
   let query = '';
+
+  db.collection('parents').onSnapshot((snapshot) => {
+    allParents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTable();
+  }, (err) => showToast(firestoreErrorMessage(err), 'error'));
 
   function renderTable(){
     const filtered = filterList(allParents, query, ['name','child']);
@@ -80,8 +92,8 @@
           <td>${p.phone}</td>
           <td><span class="pill ${p.status === 'active' ? 'pill-success' : 'pill-danger'}">${p.status === 'active' ? 'Faol' : 'Nofaol'}</span></td>
           <td style="text-align:right;">
-            <button class="btn btn-ghost btn-sm" onclick="editParent(${p.id})">Tahrirlash</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteParent(${p.id})">O'chirish</button>
+            <button class="btn btn-ghost btn-sm" onclick="editParent('${p.id}')">Tahrirlash</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteParent('${p.id}')">O'chirish</button>
           </td>
         </tr>`).join('');
     }
@@ -89,25 +101,35 @@
 
   document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; renderTable(); });
 
-  function editParent(id){
-    showToast(`"${allParents.find(p=>p.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  async function editParent(id){
+    const p = allParents.find(x => x.id === id);
+    const values = await openFormModal(`"${p.name}" ni tahrirlash`, PARENT_FIELDS, p);
+    if(!values) return;
+    try {
+      await db.collection('parents').doc(id).update(values);
+      showToast("Ota-ona ma'lumotlari yangilandi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   }
 
   async function deleteParent(id){
     const p = allParents.find(x => x.id === id);
     const ok = await confirmDialog("Ota-onani o'chirish", `"${p.name}" ni ro'yxatdan o'chirmoqchimisiz?`);
     if(ok){
-      allParents = allParents.filter(x => x.id !== id);
-      renderTable();
-      showToast("Ota-ona muvaffaqiyatli o'chirildi", 'success');
+      try {
+        await db.collection('parents').doc(id).delete();
+        showToast("Ota-ona muvaffaqiyatli o'chirildi", 'success');
+      } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
     }
   }
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi ota-ona qo'shish oynasi ochiladi (demo)", 'info');
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi ota-ona qo'shish", PARENT_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('parents').add(values);
+      showToast("Yangi ota-ona qo'shildi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });
-
-  renderTable();
 </script>
 </body>
 </html>

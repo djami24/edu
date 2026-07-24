@@ -63,8 +63,21 @@
 <script>
   guardPage('admin');
 
-  let allGroups = [...DEMO.groups];
+  const GROUP_FIELDS = [
+    { key: 'name', label: 'Guruh nomi', required: true },
+    { key: 'teacher', label: "O'qituvchi", required: true },
+    { key: 'level', label: 'Daraja', required: true },
+    { key: 'students', label: 'Talabalar soni', type: 'number', default: 0 },
+    { key: 'schedule', label: 'Jadval (masalan: Du/Chor/Juma 14:00)', required: true }
+  ];
+
+  let allGroups = [];
   let query = '';
+
+  db.collection('groups').onSnapshot((snapshot) => {
+    allGroups = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTable();
+  }, (err) => showToast(firestoreErrorMessage(err), 'error'));
 
   function renderTable(){
     const filtered = filterList(allGroups, query, ['name','teacher']);
@@ -80,8 +93,8 @@
           <td>${g.students}</td>
           <td>${g.schedule}</td>
           <td style="text-align:right;">
-            <button class="btn btn-ghost btn-sm" onclick="editGroup(${g.id})">Tahrirlash</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteGroup(${g.id})">O'chirish</button>
+            <button class="btn btn-ghost btn-sm" onclick="editGroup('${g.id}')">Tahrirlash</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">O'chirish</button>
           </td>
         </tr>`).join('');
     }
@@ -89,25 +102,35 @@
 
   document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; renderTable(); });
 
-  function editGroup(id){
-    showToast(`"${allGroups.find(g=>g.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  async function editGroup(id){
+    const g = allGroups.find(x => x.id === id);
+    const values = await openFormModal(`"${g.name}" ni tahrirlash`, GROUP_FIELDS, g);
+    if(!values) return;
+    try {
+      await db.collection('groups').doc(id).update(values);
+      showToast("Guruh ma'lumotlari yangilandi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   }
 
   async function deleteGroup(id){
     const g = allGroups.find(x => x.id === id);
     const ok = await confirmDialog("Guruhni o'chirish", `"${g.name}" guruhini o'chirmoqchimisiz?`);
     if(ok){
-      allGroups = allGroups.filter(x => x.id !== id);
-      renderTable();
-      showToast("Guruh muvaffaqiyatli o'chirildi", 'success');
+      try {
+        await db.collection('groups').doc(id).delete();
+        showToast("Guruh muvaffaqiyatli o'chirildi", 'success');
+      } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
     }
   }
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi guruh qo'shish oynasi ochiladi (demo)", 'info');
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi guruh qo'shish", GROUP_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('groups').add(values);
+      showToast("Yangi guruh qo'shildi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });
-
-  renderTable();
 </script>
 </body>
 </html>

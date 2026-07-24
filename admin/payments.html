@@ -62,7 +62,19 @@
 <script>
   guardPage('admin');
 
-  let allPayments = [...DEMO.paymentsList];
+  const PAYMENT_FIELDS = [
+    { key: 'student', label: 'Talaba ismi', required: true },
+    { key: 'amount', label: "Summa (so'm)", type: 'number', required: true },
+    { key: 'dueDate', label: 'Muddat', type: 'date', required: true },
+    { key: 'status', label: 'Holat', type: 'select', options: [{value:'pending', label:'Kutilmoqda'},{value:'paid', label:"To'landi"},{value:'overdue', label:"Muddati o'tgan"}], default: 'pending' }
+  ];
+
+  let allPayments = [];
+
+  db.collection('payments').onSnapshot((snapshot) => {
+    allPayments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTable();
+  }, (err) => showToast(firestoreErrorMessage(err), 'error'));
 
   function statusMeta(s){
     if(s === 'paid') return { pill:'pill-success', text:"To'landi" };
@@ -87,30 +99,40 @@
         <td>${p.dueDate}</td>
         <td><span class="pill ${m.pill}">${m.text}</span></td>
         <td style="text-align:right;">
-          ${p.status !== 'paid' ? `<button class="btn btn-primary btn-sm" onclick="markPaid(${p.id})">To'langan deb belgilash</button>` : ''}
-          <button class="btn btn-ghost btn-sm" onclick="editPayment(${p.id})">Tahrirlash</button>
+          ${p.status !== 'paid' ? `<button class="btn btn-primary btn-sm" onclick="markPaid('${p.id}')">To'langan deb belgilash</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="editPayment('${p.id}')">Tahrirlash</button>
         </td>
       </tr>`;
     }).join('');
     renderStats();
   }
 
-  function editPayment(id){
-    showToast(`"${allPayments.find(p=>p.id===id).student}" to'lovini tahrirlash oynasi ochiladi (demo)`, 'info');
-  }
-
-  function markPaid(id){
+  async function editPayment(id){
     const p = allPayments.find(x => x.id === id);
-    p.status = 'paid';
-    renderTable();
-    showToast(`${p.student} to'lovi "to'landi" deb belgilandi`, 'success');
+    const values = await openFormModal(`"${p.student}" to'lovini tahrirlash`, PAYMENT_FIELDS, p);
+    if(!values) return;
+    try {
+      await db.collection('payments').doc(id).update(values);
+      showToast("To'lov ma'lumotlari yangilandi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   }
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi to'lov qo'shish oynasi ochiladi (demo)", 'info');
-  });
+  async function markPaid(id){
+    const p = allPayments.find(x => x.id === id);
+    try {
+      await db.collection('payments').doc(id).update({ status: 'paid' });
+      showToast(`${p.student} to'lovi "to'landi" deb belgilandi`, 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
+  }
 
-  renderTable();
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi to'lov qo'shish", PAYMENT_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('payments').add(values);
+      showToast("Yangi to'lov qo'shildi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
+  });
 </script>
 </body>
 </html>

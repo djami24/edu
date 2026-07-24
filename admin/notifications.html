@@ -54,14 +54,44 @@
   const pillFor = { info:'pill-info', warning:'pill-warning', success:'pill-success' };
   const labelFor = { info:'Yangi', warning:'Eslatma', success:'Bajarildi' };
 
-  document.getElementById('notifCard').innerHTML = DEMO.notificationsAdmin.map(n => `
-    <div class="list-item">
-      <div><div class="li-title">${n.text}</div><div class="li-meta">${n.time}</div></div>
-      <span class="pill ${pillFor[n.type]}">${labelFor[n.type]}</span>
-    </div>`).join('');
+  const NOTIF_FIELDS = [
+    { key: 'text', label: 'Xabar matni', required: true },
+    { key: 'type', label: 'Turi', type: 'select', options: [{value:'info', label:'Yangi'},{value:'warning', label:'Eslatma'},{value:'success', label:'Bajarildi'}], default: 'info' }
+  ];
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi e'lon yaratish oynasi ochiladi (demo)", 'info');
+  let myUid = null;
+
+  auth.onAuthStateChanged((user) => {
+    if(!user) return;
+    myUid = user.uid;
+    db.collection('notifications').where('recipientId', '==', myUid).onSnapshot((snapshot) => {
+      const rows = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      const card = document.getElementById('notifCard');
+      if(rows.length === 0){
+        card.innerHTML = `<div class="list-item"><div class="li-meta">Hozircha bildirishnoma yo'q</div></div>`;
+      } else {
+        card.innerHTML = rows.map(n => `
+          <div class="list-item">
+            <div><div class="li-title">${n.text}</div><div class="li-meta">${n.time || ''}</div></div>
+            <span class="pill ${pillFor[n.type] || 'pill-info'}">${labelFor[n.type] || 'Yangi'}</span>
+          </div>`).join('');
+      }
+    }, (err) => showToast(firestoreErrorMessage(err), 'error'));
+  });
+
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi e'lon yaratish", NOTIF_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('notifications').add({
+        ...values,
+        recipientId: myUid,
+        time: new Date().toLocaleString('uz-UZ'),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast("Yangi e'lon yaratildi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });
 </script>
 </body>

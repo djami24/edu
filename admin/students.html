@@ -69,17 +69,33 @@
 <script>
   guardPage('admin');
 
-  // Haqiqiy loyihada: let allStudents = []; db.collection('students').onSnapshot(...)
-  let allStudents = [...DEMO.students, ...DEMO.students.map(s => ({...s, id: s.id+10, name: s.name+' II'}))]; // pagination sinash uchun ko'paytirildi
+  const STUDENT_FIELDS = [
+    { key: 'name', label: 'Ism familiya', required: true },
+    { key: 'group', label: 'Guruh', required: true },
+    { key: 'teacher', label: "O'qituvchi", required: true },
+    { key: 'attendance', label: 'Davomat (%)', type: 'number', default: 100 },
+    { key: 'status', label: 'Holat', type: 'select', options: [{value:'active', label:'Faol'},{value:'inactive', label:'Nofaol'}], default: 'active' },
+    { key: 'photo', label: 'Rasm URL (ixtiyoriy)', default: 'https://i.pravatar.cc/100' }
+  ];
+
+  let allStudents = [];
   const perPage = 5;
   let currentPage = 1;
   let query = '';
   let groupFilterVal = '';
-
-  // Guruh filtri ro'yxatini to'ldirish
-  const groups = [...new Set(DEMO.students.map(s => s.group))];
   const groupSelect = document.getElementById('groupFilter');
-  groups.forEach(g => groupSelect.innerHTML += `<option value="${g}">${g}</option>`);
+
+  db.collection('students').onSnapshot((snapshot) => {
+    allStudents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const groups = [...new Set(allStudents.map(s => s.group))];
+    groupSelect.innerHTML = '<option value="">Barcha guruhlar</option>' + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+    groupSelect.value = groupFilterVal;
+
+    renderTable();
+  }, (err) => {
+    showToast(firestoreErrorMessage(err), 'error');
+  });
 
   function getFiltered(){
     let items = filterList(allStudents, query, ['name','group']);
@@ -104,8 +120,8 @@
           <td>${s.attendance}%</td>
           <td><span class="pill ${s.status === 'active' ? 'pill-success' : 'pill-danger'}">${s.status === 'active' ? 'Faol' : 'Nofaol'}</span></td>
           <td style="text-align:right;">
-            <button class="btn btn-ghost btn-sm" onclick="editStudent(${s.id})">Tahrirlash</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">O'chirish</button>
+            <button class="btn btn-ghost btn-sm" onclick="editStudent('${s.id}')">Tahrirlash</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">O'chirish</button>
           </td>
         </tr>`).join('');
     }
@@ -115,25 +131,40 @@
   document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; currentPage = 1; renderTable(); });
   document.getElementById('groupFilter').addEventListener('change', (e) => { groupFilterVal = e.target.value; currentPage = 1; renderTable(); });
 
-  function editStudent(id){
-    showToast(`"${allStudents.find(s=>s.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
-    // Haqiqiy loyihada: modal ochilib, db.collection('students').doc(id).update({...}) chaqiriladi
+  async function editStudent(id){
+    const student = allStudents.find(s => s.id === id);
+    const values = await openFormModal(`"${student.name}" ni tahrirlash`, STUDENT_FIELDS, student);
+    if(!values) return;
+    try {
+      await db.collection('students').doc(id).update(values);
+      showToast("Talaba ma'lumotlari yangilandi", 'success');
+    } catch(err){
+      showToast(firestoreErrorMessage(err), 'error');
+    }
   }
 
   async function deleteStudent(id){
     const student = allStudents.find(s => s.id === id);
     const ok = await confirmDialog("Talabani o'chirish", `"${student.name}" ni ro'yxatdan o'chirmoqchimisiz? Bu amalni orqaga qaytarib bo'lmaydi.`);
     if(ok){
-      allStudents = allStudents.filter(s => s.id !== id);
-      renderTable();
-      showToast("Talaba muvaffaqiyatli o'chirildi", 'success');
-      // Haqiqiy loyihada: await db.collection('students').doc(id).delete();
+      try {
+        await db.collection('students').doc(id).delete();
+        showToast("Talaba muvaffaqiyatli o'chirildi", 'success');
+      } catch(err){
+        showToast(firestoreErrorMessage(err), 'error');
+      }
     }
   }
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi talaba qo'shish oynasi ochiladi (demo)", 'info');
-    // Haqiqiy loyihada: modal orqali forma ko'rsatilib, db.collection('students').add({...}) chaqiriladi
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi talaba qo'shish", STUDENT_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('students').add(values);
+      showToast("Yangi talaba qo'shildi", 'success');
+    } catch(err){
+      showToast(firestoreErrorMessage(err), 'error');
+    }
   });
 
   renderTable();

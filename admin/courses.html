@@ -53,7 +53,20 @@
 <script>
   guardPage('admin');
 
-  let allCourses = [...DEMO.courses];
+  const COURSE_FIELDS = [
+    { key: 'name', label: 'Kurs nomi', required: true },
+    { key: 'level', label: 'Daraja', required: true },
+    { key: 'teacher', label: "O'qituvchi", required: true },
+    { key: 'students', label: 'Talabalar soni', type: 'number', default: 0 },
+    { key: 'price', label: "Oylik narx (so'm)", type: 'number', required: true }
+  ];
+
+  let allCourses = [];
+
+  db.collection('courses').onSnapshot((snapshot) => {
+    allCourses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderCourses();
+  }, (err) => showToast(firestoreErrorMessage(err), 'error'));
 
   function renderCourses(){
     const grid = document.getElementById('coursesGrid');
@@ -65,31 +78,41 @@
         <div class="list-item"><div class="li-title">Talabalar</div><span class="li-meta">${c.students}</span></div>
         <div class="list-item"><div class="li-title">Oylik narx</div><span class="li-meta">${c.price} so'm</span></div>
         <div style="display:flex; gap:8px; margin-top:12px;">
-          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="editCourse(${c.id})">Tahrirlash</button>
-          <button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteCourse(${c.id})">O'chirish</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="editCourse('${c.id}')">Tahrirlash</button>
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteCourse('${c.id}')">O'chirish</button>
         </div>
       </div>`).join('');
   }
 
-  function editCourse(id){
-    showToast(`"${allCourses.find(c=>c.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  async function editCourse(id){
+    const c = allCourses.find(x => x.id === id);
+    const values = await openFormModal(`"${c.name}" ni tahrirlash`, COURSE_FIELDS, c);
+    if(!values) return;
+    try {
+      await db.collection('courses').doc(id).update(values);
+      showToast("Kurs ma'lumotlari yangilandi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   }
 
   async function deleteCourse(id){
     const c = allCourses.find(x => x.id === id);
     const ok = await confirmDialog("Kursni o'chirish", `"${c.name}" kursini o'chirmoqchimisiz?`);
     if(ok){
-      allCourses = allCourses.filter(x => x.id !== id);
-      renderCourses();
-      showToast("Kurs muvaffaqiyatli o'chirildi", 'success');
+      try {
+        await db.collection('courses').doc(id).delete();
+        showToast("Kurs muvaffaqiyatli o'chirildi", 'success');
+      } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
     }
   }
 
-  document.getElementById('addBtn').addEventListener('click', () => {
-    showToast("Yangi kurs qo'shish oynasi ochiladi (demo)", 'info');
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const values = await openFormModal("Yangi kurs qo'shish", COURSE_FIELDS, {});
+    if(!values) return;
+    try {
+      await db.collection('courses').add(values);
+      showToast("Yangi kurs qo'shildi", 'success');
+    } catch(err){ showToast(firestoreErrorMessage(err), 'error'); }
   });
-
-  renderCourses();
 </script>
 </body>
 </html>

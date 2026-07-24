@@ -68,8 +68,29 @@
 <script>
   guardPage('admin');
 
-  function saveProfile(){
-    showToast("Profil ma'lumotlari saqlandi (demo)", 'success');
+  auth.onAuthStateChanged(async (user) => {
+    if(!user) return;
+    const doc = await db.collection('users').doc(user.uid).get();
+    if(doc.exists){
+      document.getElementById('setName').value = doc.data().name || '';
+      document.getElementById('setEmail').value = doc.data().email || user.email || '';
+    }
+  });
+
+  async function saveProfile(){
+    const user = auth.currentUser;
+    if(!user){ showToast("Tizimga kirilmagan", 'error'); return; }
+    const name = document.getElementById('setName').value.trim();
+    if(!name){ showToast("Ismni kiriting", 'error'); return; }
+    try {
+      await db.collection('users').doc(user.uid).update({ name });
+      showToast("Profil ma'lumotlari saqlandi", 'success');
+    } catch(err){
+      showToast(firestoreErrorMessage(err), 'error');
+    }
+    // Eslatma: emailni o'zgartirish uchun Firebase Auth'da qayta autentifikatsiya
+    // (reauthenticateWithCredential) kerak bo'ladi — xavfsizlik sababli bu yerda
+    // amalga oshirilmagan.
   }
 </script>
 </body>
