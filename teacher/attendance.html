@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Davomat belgilash — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link active" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Davomat belgilash</h1><p class="subtitle">Bugungi dars uchun davomatni belgilang</p></div>
+    </div>
+
+    <div class="tabs" id="groupTabs"></div>
+
+    <div class="card">
+      <div class="card-title" id="groupTitle">—</div>
+      <div id="attendanceForm"></div>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="saveAttendance()">Davomatni saqlash</button>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  const myGroups = DEMO.groups.filter(g => g.teacher === 'Mr. Abdurahim');
+  let activeGroup = myGroups[0];
+
+  function renderTabs(){
+    document.getElementById('groupTabs').innerHTML = myGroups.map(g => `
+      <button class="tab-btn ${g.name === activeGroup.name ? 'active' : ''}" onclick="selectGroup('${g.name}')">${g.name}</button>
+    `).join('');
+  }
+
+  function selectGroup(name){
+    activeGroup = myGroups.find(g => g.name === name);
+    renderTabs();
+    renderForm();
+  }
+
+  function renderForm(){
+    document.getElementById('groupTitle').textContent = `Bugungi davomat — ${activeGroup.name}`;
+    const groupStudents = DEMO.students.filter(s => s.group === activeGroup.name);
+    const list = groupStudents.length ? groupStudents : DEMO.students.slice(0,4); // demo: guruh bo'sh bo'lsa namuna ko'rsatish
+    const wrap = document.getElementById('attendanceForm');
+    wrap.innerHTML = list.map(s => `
+      <div class="list-item">
+        <div style="display:flex; align-items:center; gap:10px;"><img class="avatar-sm" src="${s.photo}"><span style="font-weight:600; font-size:13px;">${s.name}</span></div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-sm btn-ghost att-btn" data-v="present" onclick="markAtt(this)">Keldi</button>
+          <button class="btn btn-sm btn-ghost att-btn" data-v="late" onclick="markAtt(this)">Kechikdi</button>
+          <button class="btn btn-sm btn-ghost att-btn" data-v="absent" onclick="markAtt(this)">Kelmadi</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function markAtt(btn){
+    const row = btn.closest('.list-item');
+    row.querySelectorAll('.att-btn').forEach(b => b.classList.remove('btn-primary'));
+    btn.classList.add('btn-primary');
+  }
+
+  function saveAttendance(){
+    // Haqiqiy loyihada: har bir talaba uchun
+    // db.collection('attendance').add({studentId, groupId, date, status})
+    showToast(`${activeGroup.name} guruhi uchun davomat saqlandi`, 'success');
+  }
+
+  renderTabs();
+  renderForm();
+</script>
+</body>
+</html>
