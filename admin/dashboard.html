@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin panel — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Admin paneli</div></div></div>
+
+    <div class="nav-group-title">Umumiy</div>
+    <a class="nav-link active" href="dashboard.html">🏠 Dashboard</a>
+    <a class="nav-link" href="reports.html">📈 Hisobotlar</a>
+
+    <div class="nav-group-title">Boshqaruv</div>
+    <a class="nav-link" href="students.html">🎓 Talabalar</a>
+    <a class="nav-link" href="parents.html">👪 Ota-onalar</a>
+    <a class="nav-link" href="teachers.html">👩‍🏫 O'qituvchilar</a>
+    <a class="nav-link" href="groups.html">👥 Guruhlar</a>
+    <a class="nav-link" href="courses.html">📘 Kurslar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="exams.html">📄 Test/Imtihonlar</a>
+    <a class="nav-link" href="payments.html">💳 To'lovlar</a>
+
+    <div class="nav-group-title">Tizim</div>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar</a>
+    <a class="nav-link" href="settings.html">⚙️ Sozlamalar</a>
+
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Dashboard</h1><p class="subtitle">O'quv markazining umumiy holati</p></div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="toggleDarkMode()">🌙</button>
+        <button class="icon-btn">🔔<span class="dot"></span></button>
+        <div class="user-chip"><img src="https://i.pravatar.cc/100?img=60"><div><div class="u-name">Admin</div><div class="u-role">Boshqaruvchi</div></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-value" id="s1">—</div><div class="stat-label">Jami talabalar</div><div class="stat-delta up">+12 shu oy</div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="s2">—</div><div class="stat-label">Faol guruhlar</div><div class="stat-delta up">+2 shu oy</div></div>
+      <div class="stat-card"><div class="stat-icon">👩‍🏫</div><div class="stat-value" id="s3">—</div><div class="stat-label">O'qituvchilar</div></div>
+      <div class="stat-card"><div class="stat-icon">👪</div><div class="stat-value" id="s4">—</div><div class="stat-label">Ota-onalar</div></div>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="hero-card grid-span-2">
+        <div><div class="hero-label">Oylik daromad</div><div class="hero-value" id="s5">—</div><div class="hero-label">so'm • shu oy</div></div>
+        <svg width="90" height="50" viewBox="0 0 90 50"><path d="M0 40 Q15 35 25 25 T50 20 T75 8 T90 5" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+      </div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="s6">—%</div><div class="stat-label">Davomat darajasi</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">87%</div><div class="stat-label">O'rtacha test balli</div></div>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-title">Oylik ro'yxatga olish dinamikasi</div>
+        <div style="height:220px;"><canvas id="enrollChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Guruhlar bo'yicha talabalar soni</div>
+        <div style="height:220px;"><canvas id="groupChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">So'nggi faoliyat</div>
+        <div id="activityList"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Yaqin darslar</div>
+        <div id="classList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/charts.js"></script>
+<script>
+  guardPage('admin');
+  const st = DEMO.adminStats;
+  document.getElementById('s1').textContent = st.totalStudents;
+  document.getElementById('s2').textContent = st.activeGroups;
+  document.getElementById('s3').textContent = st.teachers;
+  document.getElementById('s4').textContent = st.parents;
+  document.getElementById('s5').textContent = st.monthlyIncome;
+  document.getElementById('s6').textContent = st.attendanceRate + '%';
+
+  renderLineChart('enrollChart', ['Fev','Mar','Apr','May','Iyun','Iyul'], [180,195,205,220,235,246], "Talabalar");
+  renderBarChart('groupChart', DEMO.teachers.map(t=>t.name), DEMO.teachers.map(t=>t.students), "Talabalar");
+
+  document.getElementById('activityList').innerHTML = DEMO.recentActivities.map(a => `
+    <div class="list-item"><div><div class="li-title" style="font-size:13px;">${a.text}</div><div class="li-meta">${a.time}</div></div></div>
+  `).join('');
+
+  document.getElementById('classList').innerHTML = DEMO.upcomingClasses.map(c => `
+    <div class="list-item">
+      <div><div class="li-title">${c.group}</div><div class="li-meta">${c.teacher} • ${c.room}</div></div>
+      <span class="pill pill-info">${c.time}</span>
+    </div>
+  `).join('');
+</script>
+</body>
+</html>

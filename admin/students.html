@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talabalar — Education Express Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Admin paneli</div></div></div>
+    <div class="nav-group-title">Umumiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Dashboard</a>
+    <a class="nav-link" href="reports.html">📈 Hisobotlar</a>
+    <div class="nav-group-title">Boshqaruv</div>
+    <a class="nav-link active" href="students.html">🎓 Talabalar</a>
+    <a class="nav-link" href="parents.html">👪 Ota-onalar</a>
+    <a class="nav-link" href="teachers.html">👩‍🏫 O'qituvchilar</a>
+    <a class="nav-link" href="groups.html">👥 Guruhlar</a>
+    <a class="nav-link" href="courses.html">📘 Kurslar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="exams.html">📄 Test/Imtihonlar</a>
+    <a class="nav-link" href="payments.html">💳 To'lovlar</a>
+    <div class="nav-group-title">Tizim</div>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar</a>
+    <a class="nav-link" href="settings.html">⚙️ Sozlamalar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Talabalar</h1><p class="subtitle">Barcha talabalarni boshqarish</p></div>
+      <button class="btn btn-primary" style="width:auto;" id="addBtn">+ Yangi talaba</button>
+    </div>
+
+    <div class="card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="Talaba nomi bo'yicha qidirish...">
+        </div>
+        <select class="form-input" id="groupFilter" style="width:auto;">
+          <option value="">Barcha guruhlar</option>
+        </select>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr><th>Talaba</th><th>Guruh</th><th>O'qituvchi</th><th>Davomat</th><th>Holat</th><th></th></tr>
+        </thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('admin');
+
+  // Haqiqiy loyihada: let allStudents = []; db.collection('students').onSnapshot(...)
+  let allStudents = [...DEMO.students, ...DEMO.students.map(s => ({...s, id: s.id+10, name: s.name+' II'}))]; // pagination sinash uchun ko'paytirildi
+  const perPage = 5;
+  let currentPage = 1;
+  let query = '';
+  let groupFilterVal = '';
+
+  // Guruh filtri ro'yxatini to'ldirish
+  const groups = [...new Set(DEMO.students.map(s => s.group))];
+  const groupSelect = document.getElementById('groupFilter');
+  groups.forEach(g => groupSelect.innerHTML += `<option value="${g}">${g}</option>`);
+
+  function getFiltered(){
+    let items = filterList(allStudents, query, ['name','group']);
+    if(groupFilterVal) items = items.filter(s => s.group === groupFilterVal);
+    return items;
+  }
+
+  function renderTable(){
+    const filtered = getFiltered();
+    const start = (currentPage - 1) * perPage;
+    const pageItems = filtered.slice(start, start + perPage);
+    const tbody = document.getElementById('studentsBody');
+
+    if(pageItems.length === 0){
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--color-text-muted); padding:30px;">Hech narsa topilmadi</td></tr>`;
+    } else {
+      tbody.innerHTML = pageItems.map(s => `
+        <tr>
+          <td style="display:flex; align-items:center; gap:10px;"><img class="avatar-sm" src="${s.photo}"><span style="font-weight:600;">${s.name}</span></td>
+          <td>${s.group}</td>
+          <td>${s.teacher}</td>
+          <td>${s.attendance}%</td>
+          <td><span class="pill ${s.status === 'active' ? 'pill-success' : 'pill-danger'}">${s.status === 'active' ? 'Faol' : 'Nofaol'}</span></td>
+          <td style="text-align:right;">
+            <button class="btn btn-ghost btn-sm" onclick="editStudent(${s.id})">Tahrirlash</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">O'chirish</button>
+          </td>
+        </tr>`).join('');
+    }
+    renderPagination(document.getElementById('pagination'), filtered.length, perPage, currentPage, (p) => { currentPage = p; renderTable(); });
+  }
+
+  document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; currentPage = 1; renderTable(); });
+  document.getElementById('groupFilter').addEventListener('change', (e) => { groupFilterVal = e.target.value; currentPage = 1; renderTable(); });
+
+  function editStudent(id){
+    showToast(`"${allStudents.find(s=>s.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
+    // Haqiqiy loyihada: modal ochilib, db.collection('students').doc(id).update({...}) chaqiriladi
+  }
+
+  async function deleteStudent(id){
+    const student = allStudents.find(s => s.id === id);
+    const ok = await confirmDialog("Talabani o'chirish", `"${student.name}" ni ro'yxatdan o'chirmoqchimisiz? Bu amalni orqaga qaytarib bo'lmaydi.`);
+    if(ok){
+      allStudents = allStudents.filter(s => s.id !== id);
+      renderTable();
+      showToast("Talaba muvaffaqiyatli o'chirildi", 'success');
+      // Haqiqiy loyihada: await db.collection('students').doc(id).delete();
+    }
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    showToast("Yangi talaba qo'shish oynasi ochiladi (demo)", 'info');
+    // Haqiqiy loyihada: modal orqali forma ko'rsatilib, db.collection('students').add({...}) chaqiriladi
+  });
+
+  renderTable();
+</script>
+</body>
+</html>
