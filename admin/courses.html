@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kurslar — Education Express Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Admin paneli</div></div></div>
+    <div class="nav-group-title">Umumiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Dashboard</a>
+    <a class="nav-link" href="reports.html">📈 Hisobotlar</a>
+    <div class="nav-group-title">Boshqaruv</div>
+    <a class="nav-link" href="students.html">🎓 Talabalar</a>
+    <a class="nav-link" href="parents.html">👪 Ota-onalar</a>
+    <a class="nav-link" href="teachers.html">👩‍🏫 O'qituvchilar</a>
+    <a class="nav-link" href="groups.html">👥 Guruhlar</a>
+    <a class="nav-link active" href="courses.html">📘 Kurslar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="exams.html">📄 Test/Imtihonlar</a>
+    <a class="nav-link" href="payments.html">💳 To'lovlar</a>
+    <div class="nav-group-title">Tizim</div>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar</a>
+    <a class="nav-link" href="settings.html">⚙️ Sozlamalar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Kurslar</h1><p class="subtitle">Barcha kurslarni boshqarish</p></div>
+      <button class="btn btn-primary" style="width:auto;" id="addBtn">+ Yangi kurs</button>
+    </div>
+
+    <div class="grid grid-3">
+      <div id="coursesGrid" style="display:contents;"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('admin');
+
+  let allCourses = [...DEMO.courses];
+
+  function renderCourses(){
+    const grid = document.getElementById('coursesGrid');
+    grid.innerHTML = allCourses.map(c => `
+      <div class="card">
+        <div class="card-title">${c.name}</div>
+        <div class="li-meta" style="margin-bottom:10px;">Daraja: ${c.level}</div>
+        <div class="list-item"><div class="li-title">O'qituvchi</div><span class="li-meta">${c.teacher}</span></div>
+        <div class="list-item"><div class="li-title">Talabalar</div><span class="li-meta">${c.students}</span></div>
+        <div class="list-item"><div class="li-title">Oylik narx</div><span class="li-meta">${c.price} so'm</span></div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="editCourse(${c.id})">Tahrirlash</button>
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteCourse(${c.id})">O'chirish</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function editCourse(id){
+    showToast(`"${allCourses.find(c=>c.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  }
+
+  async function deleteCourse(id){
+    const c = allCourses.find(x => x.id === id);
+    const ok = await confirmDialog("Kursni o'chirish", `"${c.name}" kursini o'chirmoqchimisiz?`);
+    if(ok){
+      allCourses = allCourses.filter(x => x.id !== id);
+      renderCourses();
+      showToast("Kurs muvaffaqiyatli o'chirildi", 'success');
+    }
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    showToast("Yangi kurs qo'shish oynasi ochiladi (demo)", 'info');
+  });
+
+  renderCourses();
+</script>
+</body>
+</html>

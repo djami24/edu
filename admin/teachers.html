@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O'qituvchilar — Education Express Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Admin paneli</div></div></div>
+    <div class="nav-group-title">Umumiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Dashboard</a>
+    <a class="nav-link" href="reports.html">📈 Hisobotlar</a>
+    <div class="nav-group-title">Boshqaruv</div>
+    <a class="nav-link" href="students.html">🎓 Talabalar</a>
+    <a class="nav-link" href="parents.html">👪 Ota-onalar</a>
+    <a class="nav-link active" href="teachers.html">👩‍🏫 O'qituvchilar</a>
+    <a class="nav-link" href="groups.html">👥 Guruhlar</a>
+    <a class="nav-link" href="courses.html">📘 Kurslar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="exams.html">📄 Test/Imtihonlar</a>
+    <a class="nav-link" href="payments.html">💳 To'lovlar</a>
+    <div class="nav-group-title">Tizim</div>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar</a>
+    <a class="nav-link" href="settings.html">⚙️ Sozlamalar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>O'qituvchilar</h1><p class="subtitle">Barcha o'qituvchilarni boshqarish</p></div>
+      <button class="btn btn-primary" style="width:auto;" id="addBtn">+ Yangi o'qituvchi</button>
+    </div>
+
+    <div class="card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="O'qituvchi nomi bo'yicha qidirish...">
+        </div>
+      </div>
+
+      <table class="table">
+        <thead><tr><th>O'qituvchi</th><th>Fan</th><th>Guruhlar</th><th>Talabalar</th><th></th></tr></thead>
+        <tbody id="teachersBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('admin');
+
+  let allTeachers = [...DEMO.teachers];
+  let query = '';
+
+  function renderTable(){
+    const filtered = filterList(allTeachers, query, ['name','subject']);
+    const tbody = document.getElementById('teachersBody');
+    if(filtered.length === 0){
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--color-text-muted); padding:30px;">Hech narsa topilmadi</td></tr>`;
+    } else {
+      tbody.innerHTML = filtered.map(t => `
+        <tr>
+          <td style="display:flex; align-items:center; gap:10px;"><img class="avatar-sm" src="${t.photo}"><span style="font-weight:600;">${t.name}</span></td>
+          <td>${t.subject}</td>
+          <td>${t.groups}</td>
+          <td>${t.students}</td>
+          <td style="text-align:right;">
+            <button class="btn btn-ghost btn-sm" onclick="editTeacher(${t.id})">Tahrirlash</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">O'chirish</button>
+          </td>
+        </tr>`).join('');
+    }
+  }
+
+  document.getElementById('searchInput').addEventListener('input', (e) => { query = e.target.value; renderTable(); });
+
+  function editTeacher(id){
+    showToast(`"${allTeachers.find(t=>t.id===id).name}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  }
+
+  async function deleteTeacher(id){
+    const t = allTeachers.find(x => x.id === id);
+    const ok = await confirmDialog("O'qituvchini o'chirish", `"${t.name}" ni ro'yxatdan o'chirmoqchimisiz?`);
+    if(ok){
+      allTeachers = allTeachers.filter(x => x.id !== id);
+      renderTable();
+      showToast("O'qituvchi muvaffaqiyatli o'chirildi", 'success');
+    }
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    showToast("Yangi o'qituvchi qo'shish oynasi ochiladi (demo)", 'info');
+  });
+
+  renderTable();
+</script>
+</body>
+</html>

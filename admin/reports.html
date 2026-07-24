@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hisobotlar — Education Express Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Admin paneli</div></div></div>
+    <div class="nav-group-title">Umumiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Dashboard</a>
+    <a class="nav-link active" href="reports.html">📈 Hisobotlar</a>
+    <div class="nav-group-title">Boshqaruv</div>
+    <a class="nav-link" href="students.html">🎓 Talabalar</a>
+    <a class="nav-link" href="parents.html">👪 Ota-onalar</a>
+    <a class="nav-link" href="teachers.html">👩‍🏫 O'qituvchilar</a>
+    <a class="nav-link" href="groups.html">👥 Guruhlar</a>
+    <a class="nav-link" href="courses.html">📘 Kurslar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="exams.html">📄 Test/Imtihonlar</a>
+    <a class="nav-link" href="payments.html">💳 To'lovlar</a>
+    <div class="nav-group-title">Tizim</div>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar</a>
+    <a class="nav-link" href="settings.html">⚙️ Sozlamalar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Hisobotlar</h1><p class="subtitle">O'quv markazining umumiy statistikasi</p></div>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-value" id="r1">—</div><div class="stat-label">Jami talabalar</div></div>
+      <div class="stat-card"><div class="stat-icon">💳</div><div class="stat-value" id="r2">—</div><div class="stat-label">Oylik daromad</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="r3">—%</div><div class="stat-label">Davomat darajasi</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">87%</div><div class="stat-label">O'rtacha test balli</div></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">Oylik ro'yxatga olish dinamikasi</div>
+        <div style="height:220px;"><canvas id="enrollChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Guruhlar bo'yicha talabalar soni</div>
+        <div style="height:220px;"><canvas id="groupChart"></canvas></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/charts.js"></script>
+<script>
+  guardPage('admin');
+  const st = DEMO.adminStats;
+  document.getElementById('r1').textContent = st.totalStudents;
+  document.getElementById('r2').textContent = st.monthlyIncome + " so'm";
+  document.getElementById('r3').textContent = st.attendanceRate + '%';
+
+  renderLineChart('enrollChart', ['Fev','Mar','Apr','May','Iyun','Iyul'], [180,195,205,220,235,246], "Talabalar");
+  renderBarChart('groupChart', DEMO.teachers.map(t=>t.name), DEMO.teachers.map(t=>t.students), "Talabalar");
+</script>
+</body>
+</html>

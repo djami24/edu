@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uy vazifalar — Education Express Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">Admin paneli</div></div></div>
+    <div class="nav-group-title">Umumiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Dashboard</a>
+    <a class="nav-link" href="reports.html">📈 Hisobotlar</a>
+    <div class="nav-group-title">Boshqaruv</div>
+    <a class="nav-link" href="students.html">🎓 Talabalar</a>
+    <a class="nav-link" href="parents.html">👪 Ota-onalar</a>
+    <a class="nav-link" href="teachers.html">👩‍🏫 O'qituvchilar</a>
+    <a class="nav-link" href="groups.html">👥 Guruhlar</a>
+    <a class="nav-link" href="courses.html">📘 Kurslar</a>
+    <a class="nav-link" href="attendance.html">🕒 Davomat</a>
+    <a class="nav-link active" href="homework.html">📝 Uy vazifalar</a>
+    <a class="nav-link" href="exams.html">📄 Test/Imtihonlar</a>
+    <a class="nav-link" href="payments.html">💳 To'lovlar</a>
+    <div class="nav-group-title">Tizim</div>
+    <a class="nav-link" href="notifications.html">🔔 Bildirishnomalar</a>
+    <a class="nav-link" href="settings.html">⚙️ Sozlamalar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Uy vazifalar</h1><p class="subtitle">Barcha guruhlarga berilgan vazifalar</p></div>
+      <button class="btn btn-primary" style="width:auto;" id="addBtn">+ Yangi vazifa</button>
+    </div>
+
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>Sarlavha</th><th>Guruh</th><th>Berilgan</th><th>Muddat</th><th>Topshirilgan</th><th></th></tr></thead>
+        <tbody id="hwBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('admin');
+
+  let allHw = [...DEMO.homeworkAdmin];
+
+  function renderTable(){
+    const tbody = document.getElementById('hwBody');
+    tbody.innerHTML = allHw.map(h => {
+      const pct = Math.round((h.submitted / h.total) * 100);
+      return `
+      <tr>
+        <td style="font-weight:600;">${h.title}</td>
+        <td>${h.group}</td>
+        <td>${h.given}</td>
+        <td>${h.due}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="progress-track" style="width:80px;"><div class="progress-fill ${pct < 70 ? 'warn' : ''}" style="width:${pct}%"></div></div>
+            <span class="li-meta">${h.submitted}/${h.total}</span>
+          </div>
+        </td>
+        <td style="text-align:right;">
+          <button class="btn btn-ghost btn-sm" onclick="editHw(${h.id})">Tahrirlash</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteHw(${h.id})">O'chirish</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function editHw(id){
+    showToast(`"${allHw.find(h=>h.id===id).title}" tahrirlash oynasi ochiladi (demo)`, 'info');
+  }
+
+  async function deleteHw(id){
+    const h = allHw.find(x => x.id === id);
+    const ok = await confirmDialog("Vazifani o'chirish", `"${h.title}" vazifasini o'chirmoqchimisiz?`);
+    if(ok){
+      allHw = allHw.filter(x => x.id !== id);
+      renderTable();
+      showToast("Vazifa muvaffaqiyatli o'chirildi", 'success');
+    }
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    showToast("Yangi vazifa qo'shish oynasi ochiladi (demo)", 'info');
+  });
+
+  renderTable();
+</script>
+</body>
+</html>
