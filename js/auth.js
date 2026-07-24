@@ -81,16 +81,16 @@ async function forgotPassword() {
 
 function guardPage(expectedRole) {
   auth.onAuthStateChanged(async (user) => {
-    if (!user) { window.location.href = '/index.html'; return; }
+    if (!user) { window.location.href = '../index.html'; return; }
     const userDoc = await db.collection('users').doc(user.uid).get();
-    if (!userDoc.exists) { window.location.href = '/index.html'; return; }
+    if (!userDoc.exists) { window.location.href = '../index.html'; return; }
     const role = userDoc.data().role;
     if (role !== expectedRole) redirectByRole(role);
   });
 }
 
 function logout() {
-  auth.signOut().then(() => window.location.href = '/index.html');
+  auth.signOut().then(() => window.location.href = '../index.html');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
