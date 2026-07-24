@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mening guruhlarim — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link active" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Mening guruhlarim</h1><p class="subtitle">Sizga biriktirilgan guruhlar</p></div>
+    </div>
+
+    <div class="grid grid-2" id="groupsGrid" style="display:contents;"></div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  // Haqiqiy loyihada: db.collection('groups').where('teacherId','==',uid).get()
+  const myGroups = DEMO.groups.filter(g => g.teacher === 'Mr. Abdurahim');
+  document.getElementById('groupsGrid').innerHTML = myGroups.map(g => `
+    <div class="card">
+      <div class="card-title">${g.name}</div>
+      <div class="li-meta" style="margin-bottom:10px;">${g.level}</div>
+      <div class="list-item"><div class="li-title">Talabalar soni</div><span class="li-meta">${g.students}</span></div>
+      <div class="list-item"><div class="li-title">Dars jadvali</div><span class="li-meta">${g.schedule}</span></div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <a class="btn btn-ghost btn-sm" style="flex:1; text-align:center;" href="students.html">Talabalarni ko'rish</a>
+        <a class="btn btn-primary btn-sm" style="flex:1; text-align:center;" href="attendance.html">Davomat belgilash</a>
+      </div>
+    </div>`).join('');
+</script>
+</body>
+</html>
