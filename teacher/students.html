@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talabalar progressi — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link active" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Talabalar progressi</h1><p class="subtitle">Guruhlaringizdagi talabalarning natijalarini kuzating</p></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <label class="form-label" style="margin:0">Guruh:</label>
+        <select class="form-input" id="filterGroup" style="width:220px" onchange="renderStudents()">
+          <option value="all">Barcha guruhlar</option>
+        </select>
+        <label class="form-label" style="margin:0">Saralash:</label>
+        <select class="form-input" id="sortBy" style="width:180px" onchange="renderStudents()">
+          <option value="name">Ism bo'yicha</option>
+          <option value="attendance">Davomat bo'yicha</option>
+          <option value="score">Ball bo'yicha</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:20px;" id="statCards"></div>
+
+    <div class="card">
+      <div class="card-title">Talabalar ro'yxati</div>
+      <div id="studentList"></div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+      <div class="card" style="width:500px; max-width:95vw; max-height:85vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div class="card-title" style="margin:0" id="modalTitle">Talaba profili</div>
+          <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+        </div>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  const myGroups = DEMO.groups.filter(g => g.teacher === 'Mr. Abdurahim');
+  const myStudents = DEMO.students.filter(s => myGroups.some(g => g.name === s.group));
+
+  // Extra demo data
+  const studentScores = {
+    1: { score: 87, hw: '18/20', tests: 3 },
+    2: { score: 91, hw: '15/16', tests: 3 },
+    3: { score: 72, hw: '10/14', tests: 2 },
+    4: { score: 95, hw: '20/20', tests: 3 },
+    5: { score: 55, hw: '8/14', tests: 1 },
+  };
+
+  // Filter setup
+  const filterEl = document.getElementById('filterGroup');
+  myGroups.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.name; opt.textContent = g.name;
+    filterEl.appendChild(opt);
+  });
+
+  function renderStudents() {
+    const group = document.getElementById('filterGroup').value;
+    const sort = document.getElementById('sortBy').value;
+    let list = group === 'all' ? [...myStudents] : myStudents.filter(s => s.group === group);
+
+    if (sort === 'attendance') list.sort((a,b) => b.attendance - a.attendance);
+    else if (sort === 'score') list.sort((a,b) => (studentScores[b.id]?.score||0) - (studentScores[a.id]?.score||0));
+    else list.sort((a,b) => a.name.localeCompare(b.name));
+
+    const avgAtt = list.length ? Math.round(list.reduce((s,x)=>s+x.attendance,0)/list.length) : 0;
+    const avgScore = list.length ? Math.round(list.reduce((s,x)=>s+(studentScores[x.id]?.score||0),0)/list.length) : 0;
+
+    document.getElementById('statCards').innerHTML = `
+      <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-value">${list.length}</div><div class="stat-label">Talabalar soni</div></div>
+      <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value">${avgAtt}%</div><div class="stat-label">O'rtacha davomat</div></div>
+      <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value">${avgScore}</div><div class="stat-label">O'rtacha ball</div></div>
+    `;
+
+    const wrap = document.getElementById('studentList');
+    if (!list.length) { wrap.innerHTML = `<div class="li-meta" style="text-align:center;padding:30px">Talabalar topilmadi</div>`; return; }
+    wrap.innerHTML = list.map(s => {
+      const sc = studentScores[s.id] || { score:0, hw:'—', tests:0 };
+      const color = sc.score >= 80 ? 'var(--success)' : sc.score >= 60 ? 'var(--warning)' : 'var(--danger)';
+      return `<div class="list-item" style="cursor:pointer" onclick="openStudent(${s.id})">
+        <div style="display:flex;align-items:center;gap:12px">
+          <img class="avatar-sm" src="${s.photo}">
+          <div>
+            <div class="li-title">${s.name}</div>
+            <div class="li-meta">${s.group}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Davomat</div>
+            <div class="progress-track" style="width:80px;margin:4px 0"><div class="progress-fill" style="width:${s.attendance}%"></div></div>
+            <div style="font-size:12px;font-weight:600">${s.attendance}%</div>
+          </div>
+          <div style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Ball</div>
+            <div style="font-size:20px;font-weight:700;color:${color}">${sc.score}</div>
+          </div>
+          <div style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Vazifa</div>
+            <div style="font-size:13px;font-weight:600">${sc.hw}</div>
+          </div>
+          <span class="pill ${s.status==='active'?'pill-success':'pill-danger'}">${s.status==='active'?'Faol':'Nofaol'}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function openStudent(id) {
+    const s = myStudents.find(x=>x.id===id);
+    const sc = studentScores[id] || {};
+    document.getElementById('modalTitle').textContent = s.name;
+    document.getElementById('modalContent').innerHTML = `
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <img src="${s.photo}" style="width:64px;height:64px;border-radius:50%;object-fit:cover">
+        <div><div style="font-size:18px;font-weight:700">${s.name}</div><div class="li-meta">${s.group}</div></div>
+      </div>
+      <div class="grid grid-2" style="margin-bottom:16px">
+        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value">${s.attendance}%</div><div class="stat-label">Davomat</div></div>
+        <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value">${sc.score||0}</div><div class="stat-label">O'rtacha ball</div></div>
+      </div>
+      <div style="margin-bottom:12px"><div class="form-label">Davomat ko'rsatkichi</div>
+        <div class="progress-track" style="height:12px"><div class="progress-fill" style="width:${s.attendance}%"></div></div>
+      </div>
+      <div style="margin-bottom:12px"><div class="form-label">Ball ko'rsatkichi</div>
+        <div class="progress-track" style="height:12px"><div class="progress-fill" style="width:${sc.score||0}%"></div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" onclick="closeModal(); window.location='comments.html'">💬 Izoh yozish</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Yopish</button>
+      </div>`;
+    document.getElementById('modalOverlay').style.display = 'flex';
+  }
+
+  function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+  renderStudents();
+</script>
+</body>
+</html>

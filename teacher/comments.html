@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haftalik izohlar — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link active" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Haftalik izohlar</h1><p class="subtitle">Talabalar haqida haftalik izoh yozing — ota-onaga ham yuboriladi</p></div>
+    </div>
+
+    <div class="grid grid-2">
+      <!-- Izoh yozish -->
+      <div class="card">
+        <div class="card-title">Yangi izoh yozish</div>
+        <div class="form-group"><label class="form-label">Guruh</label>
+          <select class="form-input" id="cmtGroup" onchange="updateStudentList()"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Talaba</label>
+          <select class="form-input" id="cmtStudent"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Izoh turi</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="cmtTypes">
+            <button class="btn btn-ghost btn-sm cmt-type-btn active" data-type="general" onclick="selectType(this)">💬 Umumiy</button>
+            <button class="btn btn-ghost btn-sm cmt-type-btn" data-type="positive" onclick="selectType(this)">✅ Ijobiy</button>
+            <button class="btn btn-ghost btn-sm cmt-type-btn" data-type="warning" onclick="selectType(this)">⚠️ Ogohlantirish</button>
+            <button class="btn btn-ghost btn-sm cmt-type-btn" data-type="parent" onclick="selectType(this)">👨‍👩‍👦 Ota-onaga</button>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Izoh matni</label>
+          <textarea class="form-input" id="cmtText" rows="5" placeholder="Talaba haqida haftalik izoh yozing..."></textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" style="flex:1" onclick="sendComment()">💬 Izohni yuborish</button>
+          <button class="btn btn-ghost" onclick="clearForm()">Tozalash</button>
+        </div>
+      </div>
+
+      <!-- Yozilgan izohlar -->
+      <div class="card">
+        <div class="card-title">Yozilgan izohlar</div>
+        <div class="form-group">
+          <select class="form-input" id="filterCommentGroup" onchange="renderComments()">
+            <option value="all">Barcha guruhlar</option>
+          </select>
+        </div>
+        <div id="commentList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<style>
+.cmt-type-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.cmt-badge-general { background:#e8f4fd; color:#2980b9; }
+.cmt-badge-positive { background:#eafaf1; color:#27ae60; }
+.cmt-badge-warning { background:#fef9e7; color:#e67e22; }
+.cmt-badge-parent { background:#f4ecf7; color:#8e44ad; }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  const myGroups = DEMO.groups.filter(g => g.teacher === 'Mr. Abdurahim');
+  const myStudents = DEMO.students.filter(s => myGroups.some(g => g.name === s.group));
+  let selectedType = 'general';
+
+  let comments = [
+    { id:1, student:'Azizbek Dilshodov', group:'Int-B1 Morning', type:'positive', text:'Bu hafta juda yaxshi ishtirok etdi. Grammatika bo\'yicha sezilarli yaxshilanish bor.', date:'21.07.2026' },
+    { id:2, student:'Sardor Aliyev', group:'Beg-A2 Morning', type:'warning', text:'Oxirgi 3 darsga kelmadi. Ota-ona bilan bog\'lanish zarur.', date:'22.07.2026' },
+  ];
+
+  // Group filter setup
+  const cmtGroupEl = document.getElementById('cmtGroup');
+  const filterEl = document.getElementById('filterCommentGroup');
+  myGroups.forEach(g => {
+    cmtGroupEl.innerHTML += `<option>${g.name}</option>`;
+    filterEl.innerHTML += `<option>${g.name}</option>`;
+  });
+
+  function updateStudentList() {
+    const group = document.getElementById('cmtGroup').value;
+    const students = myStudents.filter(s => s.group === group);
+    document.getElementById('cmtStudent').innerHTML = students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  }
+
+  function selectType(btn) {
+    document.querySelectorAll('.cmt-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedType = btn.dataset.type;
+  }
+
+  function sendComment() {
+    const student = document.getElementById('cmtStudent').options[document.getElementById('cmtStudent').selectedIndex]?.text;
+    const group = document.getElementById('cmtGroup').value;
+    const text = document.getElementById('cmtText').value.trim();
+    if (!text) { showToast('Izoh matnini kiriting', 'error'); return; }
+
+    const newComment = {
+      id: Date.now(), student, group, type: selectedType, text,
+      date: new Date().toLocaleDateString('uz-UZ')
+    };
+    comments.unshift(newComment);
+    renderComments();
+    showToast(`Izoh ${student}${selectedType === 'parent' ? ' va ota-onasiga' : 'ga'} yuborildi`, 'success');
+    clearForm();
+  }
+
+  function clearForm() {
+    document.getElementById('cmtText').value = '';
+    selectType(document.querySelector('.cmt-type-btn'));
+  }
+
+  const typeLabels = { general:'💬 Umumiy', positive:'✅ Ijobiy', warning:'⚠️ Ogohlantirish', parent:'👨‍👩‍👦 Ota-onaga' };
+
+  function renderComments() {
+    const group = document.getElementById('filterCommentGroup').value;
+    const list = group === 'all' ? comments : comments.filter(c => c.group === group);
+    const wrap = document.getElementById('commentList');
+    if (!list.length) { wrap.innerHTML = `<div class="li-meta" style="text-align:center;padding:30px">Hali izoh yozilmagan</div>`; return; }
+    wrap.innerHTML = list.map(c => `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:600;font-size:14px">${c.student}</div>
+          <span class="pill cmt-badge-${c.type}" style="font-size:11px">${typeLabels[c.type]}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:8px">${c.text}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${c.group} • ${c.date}</div>
+      </div>`).join('');
+  }
+
+  updateStudentList();
+  renderComments();
+</script>
+</body>
+</html>

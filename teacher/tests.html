@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test yaratish — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link active" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Test yaratish</h1><p class="subtitle">Guruhlaringiz uchun test va imtihonlar yarating</p></div>
+    </div>
+
+    <div class="grid grid-2">
+      <!-- Test yaratish formasi -->
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Yangi test</div>
+          <div class="form-group"><label class="form-label">Test nomi</label>
+            <input class="form-input" id="testTitle" placeholder="Masalan: Monthly Progress Test">
+          </div>
+          <div class="form-group"><label class="form-label">Guruh</label>
+            <select class="form-input" id="testGroup"></select>
+          </div>
+          <div class="form-group"><label class="form-label">Sana</label>
+            <input class="form-input" type="date" id="testDate">
+          </div>
+          <div class="form-group"><label class="form-label">Vaqt chegarasi (daqiqa)</label>
+            <input class="form-input" type="number" id="testDuration" value="45" min="5" max="180">
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Savollar <span id="qCount" style="font-size:13px;color:var(--text-muted)">(0 ta)</span></div>
+          <div id="questionList"></div>
+          <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="addQuestion()">+ Savol qo'shish</button>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%" onclick="saveTest()">✅ Testni saqlash va yuborish</button>
+      </div>
+
+      <!-- O'tgan testlar -->
+      <div class="card">
+        <div class="card-title">Yaratilgan testlar</div>
+        <div id="testList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  const myGroups = DEMO.groups.filter(g => g.teacher === 'Mr. Abdurahim');
+  document.getElementById('testGroup').innerHTML = myGroups.map(g=>`<option>${g.name}</option>`).join('');
+
+  // Default sana: bugun
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('testDate').value = today;
+
+  let questions = [];
+  let tests = DEMO.exams.filter(e => myGroups.some(g => g.name === e.group));
+
+  function addQuestion() {
+    const id = Date.now();
+    questions.push({ id, text: '', options: ['','','',''], correct: 0 });
+    renderQuestions();
+  }
+
+  function removeQuestion(id) {
+    questions = questions.filter(q => q.id !== id);
+    renderQuestions();
+  }
+
+  function renderQuestions() {
+    document.getElementById('qCount').textContent = `(${questions.length} ta)`;
+    const wrap = document.getElementById('questionList');
+    if (!questions.length) {
+      wrap.innerHTML = `<div class="li-meta" style="text-align:center;padding:20px">Hali savol qo'shilmagan</div>`;
+      return;
+    }
+    wrap.innerHTML = questions.map((q, i) => `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:600;font-size:13px">Savol ${i+1}</div>
+          <button class="btn btn-ghost btn-sm" onclick="removeQuestion(${q.id})">✕</button>
+        </div>
+        <input class="form-input" style="margin-bottom:8px" placeholder="Savol matni..." value="${q.text}"
+          onchange="questions[${i}].text=this.value">
+        ${q.options.map((opt, j) => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <input type="radio" name="correct_${q.id}" ${q.correct===j?'checked':''} onchange="questions[${i}].correct=${j}">
+            <input class="form-input" style="flex:1" placeholder="Variant ${j+1}" value="${opt}"
+              onchange="questions[${i}].options[${j}]=this.value">
+          </div>`).join('')}
+      </div>`).join('');
+  }
+
+  function saveTest() {
+    const title = document.getElementById('testTitle').value.trim();
+    const group = document.getElementById('testGroup').value;
+    const date = document.getElementById('testDate').value;
+    if (!title) { showToast('Test nomini kiriting', 'error'); return; }
+    if (questions.length === 0) { showToast("Kamida 1 ta savol qo'shing", 'error'); return; }
+
+    const newTest = {
+      id: Date.now(), title, group,
+      date: date ? new Date(date).toLocaleDateString('uz-UZ') : today,
+      avgScore: null, status: 'upcoming'
+    };
+    tests.unshift(newTest);
+    renderTests();
+    showToast(`"${title}" testi ${group} guruhiga yuborildi`, 'success');
+    document.getElementById('testTitle').value = '';
+    questions = [];
+    renderQuestions();
+  }
+
+  function renderTests() {
+    const wrap = document.getElementById('testList');
+    if (!tests.length) { wrap.innerHTML = `<div class="li-meta" style="text-align:center;padding:20px">Hali test yaratilmagan</div>`; return; }
+    wrap.innerHTML = tests.map(t => `
+      <div class="list-item">
+        <div>
+          <div class="li-title">${t.title}</div>
+          <div class="li-meta">${t.group} • ${t.date}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${t.avgScore !== null ? `<span style="font-weight:700;color:var(--primary)">${t.avgScore}</span>` : ''}
+          <span class="pill ${t.status==='completed'?'pill-success':'pill-info'}">${t.status==='completed'?'Yakunlandi':'Kutilmoqda'}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  renderQuestions();
+  renderTests();
+</script>
+</body>
+</html>

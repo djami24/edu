@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E'lonlar — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link active" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>E'lonlar</h1><p class="subtitle">Guruhlaringizga xabar va e'lonlar yuboring</p></div>
+    </div>
+
+    <div class="grid grid-2">
+      <!-- E'lon yaratish -->
+      <div class="card">
+        <div class="card-title">Yangi e'lon</div>
+        <div class="form-group"><label class="form-label">Sarlavha</label>
+          <input class="form-input" id="annTitle" placeholder="E'lon sarlavhasi">
+        </div>
+        <div class="form-group"><label class="form-label">Kimga yuborilsin</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+              <input type="checkbox" id="sendAll" onchange="toggleAll(this)"> Barcha guruhlar
+            </label>
+          </div>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px" id="groupChecks"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Muhimlik darajasi</label>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm ann-level active" data-level="info" onclick="selectLevel(this)">📘 Oddiy</button>
+            <button class="btn btn-ghost btn-sm ann-level" data-level="warning" onclick="selectLevel(this)">⚠️ Muhim</button>
+            <button class="btn btn-ghost btn-sm ann-level" data-level="urgent" onclick="selectLevel(this)">🚨 Shoshilinch</button>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Matn</label>
+          <textarea class="form-input" id="annText" rows="5" placeholder="E'lon matnini yozing..."></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="sendAnnouncement()">📢 E'lonni yuborish</button>
+      </div>
+
+      <!-- Yuborilgan e'lonlar -->
+      <div class="card">
+        <div class="card-title">Yuborilgan e'lonlar</div>
+        <div id="annList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<style>
+.ann-level.active { background: var(--primary); color:#fff; border-color:var(--primary); }
+.ann-info { border-left: 4px solid var(--primary); }
+.ann-warning { border-left: 4px solid var(--warning); }
+.ann-urgent { border-left: 4px solid var(--danger); }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  const myGroups = DEMO.groups.filter(g => g.teacher === 'Mr. Abdurahim');
+  let selectedLevel = 'info';
+
+  // Group checkboxes
+  const checksWrap = document.getElementById('groupChecks');
+  myGroups.forEach(g => {
+    checksWrap.innerHTML += `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+      <input type="checkbox" class="grp-check" value="${g.name}" checked> ${g.name}
+    </label>`;
+  });
+
+  function toggleAll(cb) {
+    document.querySelectorAll('.grp-check').forEach(c => c.checked = cb.checked);
+  }
+
+  function selectLevel(btn) {
+    document.querySelectorAll('.ann-level').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedLevel = btn.dataset.level;
+  }
+
+  let announcements = [
+    { id:1, title:"Dars jadvali o'zgarishi", groups:['Int-B1 Morning'], level:'warning', text:"Dushanba kuni dars 09:00 o'rniga 10:00 da boshlanadi.", date:'20.07.2026', seen:12 },
+    { id:2, title:'Oylik test haqida', groups:['Int-B1 Morning','Beg-A2 Morning'], level:'info', text:'Kelasi juma kuni oylik progress test o\'tkaziladi. Barcha talabalar tayyor bo\'lsin!', date:'18.07.2026', seen:25 },
+  ];
+
+  function sendAnnouncement() {
+    const title = document.getElementById('annTitle').value.trim();
+    const text = document.getElementById('annText').value.trim();
+    const groups = [...document.querySelectorAll('.grp-check:checked')].map(c => c.value);
+    if (!title) { showToast('Sarlavha kiriting', 'error'); return; }
+    if (!text) { showToast('Matn kiriting', 'error'); return; }
+    if (!groups.length) { showToast('Kamida bir guruh tanlang', 'error'); return; }
+
+    announcements.unshift({ id:Date.now(), title, groups, level:selectedLevel, text, date:new Date().toLocaleDateString('uz-UZ'), seen:0 });
+    renderAnnouncements();
+    showToast(`E'lon ${groups.join(', ')} guruhiga yuborildi`, 'success');
+    document.getElementById('annTitle').value = '';
+    document.getElementById('annText').value = '';
+  }
+
+  const levelLabel = { info:'📘 Oddiy', warning:'⚠️ Muhim', urgent:'🚨 Shoshilinch' };
+  const levelPill = { info:'pill-info', warning:'pill-warning', urgent:'pill-danger' };
+
+  function renderAnnouncements() {
+    const wrap = document.getElementById('annList');
+    if (!announcements.length) { wrap.innerHTML = `<div class="li-meta" style="text-align:center;padding:30px">Hali e'lon yuborilmagan</div>`; return; }
+    wrap.innerHTML = announcements.map(a => `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px" class="ann-${a.level}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-weight:600;font-size:14px">${a.title}</div>
+          <span class="pill ${levelPill[a.level]}" style="font-size:11px">${levelLabel[a.level]}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:8px">${a.text}</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)">
+          <span>${a.groups.join(', ')}</span>
+          <span>${a.date} • 👁 ${a.seen} ko'rdi</span>
+        </div>
+      </div>`).join('');
+  }
+
+  renderAnnouncements();
+</script>
+</body>
+</html>
