@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uy vazifa berish — Education Express</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo-badge">EE</div><div><div class="name">Education Express</div><div class="role">O'qituvchi paneli</div></div></div>
+    <div class="nav-group-title">Asosiy</div>
+    <a class="nav-link" href="dashboard.html">🏠 Bosh sahifa</a>
+    <a class="nav-link" href="groups.html">👥 Mening guruhlarim</a>
+    <a class="nav-link" href="students.html">🎓 Talabalar progressi</a>
+    <div class="nav-group-title">Ish jarayoni</div>
+    <a class="nav-link" href="attendance.html">🕒 Davomat belgilash</a>
+    <a class="nav-link active" href="homework.html">📝 Uy vazifa berish</a>
+    <a class="nav-link" href="tests.html">📄 Test yaratish</a>
+    <a class="nav-link" href="comments.html">💬 Haftalik izohlar</a>
+    <a class="nav-link" href="announcements.html">📢 E'lonlar</a>
+    <div class="sidebar-footer"><button class="btn btn-ghost" style="width:100%" onclick="logout()">Chiqish</button></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div><h1>Uy vazifa berish</h1><p class="subtitle">Guruhlaringizga yangi vazifa yuboring</p></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">Yangi uy vazifa</div>
+        <div class="form-group"><label class="form-label">Guruh</label>
+          <select class="form-input" id="hwGroup"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Sarlavha</label><input class="form-input" id="hwTitle" placeholder="Masalan: Present Perfect – Exercises"></div>
+        <div class="form-group"><label class="form-label">Topshirish muddati</label><input class="form-input" type="date" id="hwDue"></div>
+        <button class="btn btn-primary" onclick="assignHomework()">Vazifani yuborish</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Oldin berilgan vazifalar</div>
+        <div id="hwList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/demo-data.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  guardPage('teacher');
+
+  const myGroups = DEMO.groups.filter(g => g.teacher === 'Mr. Abdurahim');
+  document.getElementById('hwGroup').innerHTML = myGroups.map(g => `<option>${g.name}</option>`).join('');
+
+  let assignedHw = DEMO.homeworkAdmin.filter(h => myGroups.some(g => g.name === h.group));
+
+  function renderList(){
+    const wrap = document.getElementById('hwList');
+    wrap.innerHTML = assignedHw.map(h => `
+      <div class="list-item">
+        <div><div class="li-title">${h.title}</div><div class="li-meta">${h.group} • Muddat: ${h.due}</div></div>
+        <span class="pill pill-info">${h.submitted}/${h.total} topshirdi</span>
+      </div>`).join('');
+    if(assignedHw.length === 0){
+      wrap.innerHTML = `<div class="li-meta" style="text-align:center; padding:20px;">Hali vazifa berilmagan</div>`;
+    }
+  }
+
+  function assignHomework(){
+    const title = document.getElementById('hwTitle').value.trim();
+    const group = document.getElementById('hwGroup').value;
+    const due = document.getElementById('hwDue').value;
+    if(!title){ showToast("Iltimos, sarlavha kiriting", 'error'); return; }
+    // Haqiqiy loyihada: db.collection('homework').add({title, groupId, dueDate, teacherId})
+    assignedHw.unshift({ id:Date.now(), title, group, given:new Date().toLocaleDateString('uz-UZ'), due: due || '—', submitted:0, total: myGroups.find(g=>g.name===group)?.students || 0 });
+    renderList();
+    showToast(`"${title}" vazifasi ${group} guruhiga yuborildi`, 'success');
+    document.getElementById('hwTitle').value = '';
+  }
+
+  renderList();
+</script>
+</body>
+</html>
