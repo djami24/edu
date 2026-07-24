@@ -14,12 +14,18 @@ const CHART_COLORS = {
 /**
  * Chiziqli trend grafigi (masalan, oylik test natijalari)
  */
-function renderLineChart(canvasId, labels, data, label = "Natija"){
+function renderLineChart(canvasId, labels, data, label = "Natija", yMax = 100){
   const ctx = document.getElementById(canvasId);
   if(!ctx) return;
+  const existing = Chart.getChart(ctx);
+  if(existing) existing.destroy();
   const gradient = ctx.getContext('2d').createLinearGradient(0,0,0,220);
   gradient.addColorStop(0, 'rgba(99,102,241,0.25)');
   gradient.addColorStop(1, 'rgba(99,102,241,0)');
+
+  const yScale = (yMax === null)
+    ? { beginAtZero: true, grid: { color: CHART_COLORS.grid } }
+    : { min: 0, max: yMax, grid: { color: CHART_COLORS.grid }, ticks: { stepSize: yMax / 4 } };
 
   new Chart(ctx, {
     type: 'line',
@@ -43,7 +49,7 @@ function renderLineChart(canvasId, labels, data, label = "Natija"){
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: { min: 0, max: 100, grid: { color: CHART_COLORS.grid }, ticks: { stepSize: 25 } },
+        y: yScale,
         x: { grid: { display: false } }
       }
     }
@@ -56,6 +62,8 @@ function renderLineChart(canvasId, labels, data, label = "Natija"){
 function renderBarChart(canvasId, labels, data, label = "Qiymat"){
   const ctx = document.getElementById(canvasId);
   if(!ctx) return;
+  const existing = Chart.getChart(ctx);
+  if(existing) existing.destroy();
   new Chart(ctx, {
     type: 'bar',
     data: {
@@ -85,6 +93,8 @@ function renderBarChart(canvasId, labels, data, label = "Qiymat"){
 function renderDonutChart(canvasId, labels, data){
   const ctx = document.getElementById(canvasId);
   if(!ctx) return;
+  const existing = Chart.getChart(ctx);
+  if(existing) existing.destroy();
   new Chart(ctx, {
     type: 'doughnut',
     data: {
